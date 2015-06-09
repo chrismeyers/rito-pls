@@ -1,12 +1,10 @@
 package RITOPLS;
 
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
 
 /**
@@ -126,10 +124,12 @@ public class GUI extends javax.swing.JFrame {
                     i++;
                     try {
                         // Set current status for each service.
-                        jLabel5.setText(p.getStatus(getCurrentRegion(), sdata.getService(0)));
-                        jLabel6.setText(p.getStatus(getCurrentRegion(), sdata.getService(1)));
-                        jLabel7.setText(p.getStatus(getCurrentRegion(), sdata.getService(2)));
-                        jLabel8.setText(p.getStatus(getCurrentRegion(), sdata.getService(3)));
+                        ArrayList<String> status = new ArrayList<String>();
+                        status = p.getStatus(getCurrentRegion());
+                        jLabel5.setText(status.get(0));
+                        jLabel6.setText(status.get(1));
+                        jLabel7.setText(status.get(2));
+                        jLabel8.setText(status.get(3));
                         
                         // Change font color.
                         colorize();

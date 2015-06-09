@@ -1,11 +1,12 @@
 package RITOPLS;
 
+import com.google.gson.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
-import com.google.gson.*;
 
 /**
  * This class parses the current League of Legends service status data for a 
@@ -88,30 +89,20 @@ public class Parser {
      * @return The status of the specified service in the specified region.
      * @throws IOException 
      */
-    public String getStatus(String region, String service) throws IOException {
+    public ArrayList<String> getStatus(String region) throws IOException {
         JsonElement jelem = new JsonParser().parse(getUrlData(buildUrl(region)));
         JsonObject jobj = jelem.getAsJsonObject();
         JsonArray jarr = jobj.getAsJsonArray("services");
         
-        switch(service) {
-            case "Boards":
-                jobj = jarr.get(0).getAsJsonObject();
-                break;
-            case "Game":
-                jobj = jarr.get(1).getAsJsonObject();
-                break;
-            case "Store":
-                jobj = jarr.get(2).getAsJsonObject();
-                break;
-            case "Website":
-                jobj = jarr.get(3).getAsJsonObject();
-                break;
+        ArrayList<String> status = new ArrayList<String>();
+        
+        for(int i = 0; i < jarr.size(); i++) {
+            jobj = jarr.get(i).getAsJsonObject();
+            status.add(formatOutput(jobj.get("status").toString()));
+            //String serv = formatOutput(jobj.get("name").toString());
+            //System.out.println(region + " :: " + serv + ": " + status.get(i));
         }
-        
-        //String serv =  formatOutput(jobj.get("name").toString());
-        String status = formatOutput(jobj.get("status").toString());
-        //System.out.println(region + " :: " + serv + ": " + status);
-        
+
         return status;
     }
     
