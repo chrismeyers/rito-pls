@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 /**
  * This class provides a GUI interface that reflects the status of League of Legends 
@@ -16,7 +18,8 @@ import javax.swing.DefaultComboBoxModel;
 public class GUI extends javax.swing.JFrame {
     private String region;
     private Parser p;
-    private StaticData sdata;
+    private final StaticData sdata;
+    private int pollingRate;
     
     /**
      * Creates new form GUI
@@ -27,7 +30,9 @@ public class GUI extends javax.swing.JFrame {
 
         populateRegionComboBox(sdata.getRegions());
         populateServicesLabels(sdata.getServices());
+        setupMenus();
         setTextWhenOff(); // default state
+        setPollingRate(10); // 10 seconds by default
 
         //Initialize region to first item in ComboBox (NA)
         region = jComboBox1.getSelectedItem().toString().toLowerCase();   
@@ -63,6 +68,64 @@ public class GUI extends javax.swing.JFrame {
      */
     private void populateRegionComboBox(String[] regions) {
         jComboBox1.setModel(new DefaultComboBoxModel(regions));
+    }
+    
+    private void setupMenus() {
+        this.setTitle("League of Legends Server Status Checker");
+        this.setResizable(false);
+        jMenuItem1.setText("Set Polling Rate");
+        jMenuItem2.setText("Quit");
+        jMenuItem3.setText("About");
+        
+        jMenuItem1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String[] intervals = {"5", "10" , "15", "20" , "25" , "30"};
+                String pollingRate = "";
+                int rate = 0;
+                
+                pollingRate = (String) JOptionPane.showInputDialog(new JFrame(), 
+                    "How often should the server be checked?",
+                    "Polling rate",
+                    JOptionPane.QUESTION_MESSAGE, 
+                    null, 
+                    intervals, 
+                    intervals[0]);
+
+                rate = Integer.parseInt(pollingRate);
+
+                setPollingRate(rate);
+            }        
+        });
+        
+        jMenuItem2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }        
+        });
+        
+        jMenuItem3.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String about = 
+                        "Developed by: Chris Meyers || chrismeyers.info\n\n"
+                        + "rito-pls is a java application currently under development\n"
+                        + "that reports the current League of Legends service statuses\n"
+                        + "for a specified region. The applicationqueries the League of\n"
+                        + "Legends API periodically and presents the current status of\n"
+                        + "several services (Boards, Game, Store and Website).\n\n";
+                String legal = 
+                        "riot-pls isn’t endorsed by Riot Games and doesn’t reflect the\n"
+                        + "views or opinions of Riot Games or anyone officially involved\n"
+                        + "in producing or managing League of Legends. League of Legends\n"
+                        + "and Riot Games are trademarks or registered trademarks of Riot\n"
+                        + "Games, Inc. League of Legends © Riot Games, Inc.";
+                JOptionPane.showMessageDialog(new JFrame(), 
+                            about + legal,
+                            "About", JOptionPane.INFORMATION_MESSAGE);
+            }        
+        });
     }
     
     /**
@@ -108,6 +171,25 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
+     * Sets the rate at which the program queries the API.
+     * Default is every 10 seconds.
+     * 
+     * @param rate The rate of checking servers (in seconds)
+     */
+    private void setPollingRate(int rate) {
+        pollingRate = rate;
+    }
+    
+    /**
+     * Gets the rate at which the program queries the API.
+     * 
+     * @return The rate at which the program checks the servers.
+     */
+    public int getPollingRate() {
+        return pollingRate;
+    }
+    
+    /**
      * Adjust values of server status labels when checking is enabled.
      */
     private void setTextWhenOn() {
@@ -138,8 +220,9 @@ public class GUI extends javax.swing.JFrame {
                     }
                     
                     try {
-                        // Refresh every 10 seconds.
-                        Thread.sleep(10000);
+                        // Refresh server status, default is 10 seconds
+                        Thread.sleep(getPollingRate() * 1000);
+                        p.pollTest(getPollingRate(), getCurrentRegion());
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -259,6 +342,12 @@ public class GUI extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem3 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -291,6 +380,25 @@ public class GUI extends javax.swing.JFrame {
         jLabel7.setText("jLabel7");
 
         jLabel8.setText("jLabel8");
+
+        jMenu1.setText("File");
+
+        jMenuItem1.setText("jMenuItem1");
+        jMenu1.add(jMenuItem1);
+
+        jMenuItem2.setText("jMenuItem2");
+        jMenu1.add(jMenuItem2);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Help");
+
+        jMenuItem3.setText("jMenuItem3");
+        jMenu2.add(jMenuItem3);
+
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -344,7 +452,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(jLabel8))
-                .addContainerGap(94, Short.MAX_VALUE))
+                .addContainerGap(73, Short.MAX_VALUE))
         );
 
         pack();
@@ -368,6 +476,12 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JToggleButton jToggleButton1;
     // End of variables declaration//GEN-END:variables
 
