@@ -1,0 +1,71 @@
+{  
+   "name":"Russia",
+   "slug":"ru",
+   "locales":[  
+      "ru_RU"
+   ],
+   "hostname":"prod.ru.lol.riotgames.com",
+   "region_tag":null,
+   "services":[  
+      {  
+         "name":"Forums",
+         "slug":"forums",
+         "status":"online",
+         "incidents":[  
+
+         ]
+      },
+      {  
+         "name":"Game",
+         "slug":"game",
+         "status":"offline",
+         "incidents":[  
+            {  
+               "id":2504,
+               "active":true,
+               "created_at":"2015-06-08T21:32:31.000Z",
+               "updates":[  
+                  {  
+                     "id":2859,
+                     "author":"",
+                     "content":"Something in Russian saying that there is a problem.",
+                     "severity":"info",
+                     "created_at":"2015-06-09T21:36:00.000Z",
+                     "updated_at":"2015-06-09T21:36:02.000Z",
+                     "translations":[  
+
+                     ]
+                  },
+                  {  
+                     "id":2852,
+                     "author":"",
+                     "content":"Something in Russian saying that there is a problem.",
+                     "severity":"info",
+                     "created_at":"2015-06-08T21:32:46.000Z",
+                     "updated_at":"2015-06-08T21:32:46.000Z",
+                     "translations":[  
+
+                     ]
+                  }
+               ]
+            }
+         ]
+      },
+      {  
+         "name":"Store",
+         "slug":"store",
+         "status":"offline",
+         "incidents":[  
+
+         ]
+      },
+      {  
+         "name":"Website",
+         "slug":"web",
+         "status":"online",
+         "incidents":[  
+
+         ]
+      }
+   ]
+}
