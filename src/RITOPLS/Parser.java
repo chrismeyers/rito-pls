@@ -92,7 +92,7 @@ public class Parser {
      * @throws IOException 
      */
     public HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> 
-                                        getStatus(String region) throws IOException {//ArrayList<String> getStatus(String region) throws IOException {
+                                        getStatus(String region) throws IOException {
         JsonElement jelem = new JsonParser().parse(getUrlData(buildUrl(region)));
         JsonObject jobj = jelem.getAsJsonObject();
         JsonArray servicesArr = jobj.getAsJsonArray("services");

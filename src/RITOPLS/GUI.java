@@ -287,12 +287,19 @@ public class GUI extends javax.swing.JFrame {
                 }
             }
             
+            /**
+             * Removes brackets from the status obtained in the HashMap keySet.
+             * 
+             * @param raw The raw status string that was parsed.
+             * @return A formatted status string.
+             */
             private String formatOutput(String raw) {
                 // Remove brackets
                 String formatted = raw.replaceAll("[\\[\\]]", "");
 
                 return formatted;
             }
+            
             /**
              * Change the color of service status labels based on current state
              * of server.
