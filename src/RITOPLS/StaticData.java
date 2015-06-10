@@ -6,28 +6,29 @@ package RITOPLS;
  * @author Chris Meyers
  */
 public class StaticData {
-    private String[] services = {"Game", "Store", "Boards", "Website"};
+    private String[] servicesB = {"Boards", "Game", "Store", "Website"};
+    private String[] servicesF = {"Forums", "Game", "Store", "Website"};
     private String[] regions = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE"};
 
     public StaticData() {
     }
     
     /**
-     * Gets the array of available services.
+     * Gets the array of available services for regions that use "Boards".
      * 
      * @return An array of available services.
      */
-    public String[] getServices() {
-        return services;
+    public String[] getServicesB() {
+        return servicesB;
     }
     
     /**
-     * Gets the the number of services.
+     * Gets the array of available services for regions that use "Forums".
      * 
-     * @return The size of the services array.
+     * @return An array of available services.
      */
-    public int getNumberServices() {
-        return services.length;
+    public String[] getServicesF() {
+        return servicesF;
     }
     
     /**
@@ -49,13 +50,23 @@ public class StaticData {
     }
     
     /**
-     * Returns a specific service string.
+     * Returns a specific service string for regions that use "Forums".
      * 
      * @param index The index of the desired service string.
      * @return The desired service string.
      */
-    public String getService(int index) {
-        return services[index];
+    public String getServiceF(int index) {
+        return servicesF[index];
+    }
+    
+    /**
+     * Returns a specific service string  for regions that use "Boards".
+     * 
+     * @param index The index of the desired service string.
+     * @return The desired service string.
+     */
+    public String getServiceB(int index) {
+        return servicesB[index];
     }
     
     /**

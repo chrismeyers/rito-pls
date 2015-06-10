@@ -77,7 +77,7 @@ public class Parser {
      */
     public void pollTest(int count, String region) {
         Date d = new Date();
-        System.out.println(d.toString() + " // " + count + " // " + region);
+        System.out.println(d.toString() + " // " + count + " second interval // " + region);
     }
     
     /**
@@ -102,7 +102,7 @@ public class Parser {
             //String serv = formatOutput(jobj.get("name").toString());
             //System.out.println(region + " :: " + serv + ": " + status.get(i));
         }
-
+        
         return status;
     }
     

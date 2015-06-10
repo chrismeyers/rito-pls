@@ -17,9 +17,10 @@ import javax.swing.JOptionPane;
  */
 public class GUI extends javax.swing.JFrame {
     private String region;
-    private Parser p;
+    private final Parser p;
     private final StaticData sdata;
     private int pollingRate;
+    private static final String POLLING_OFF_MSG = "N/A";
     
     /**
      * Creates new form GUI
@@ -27,16 +28,17 @@ public class GUI extends javax.swing.JFrame {
     public GUI() throws IOException {
         initComponents();
         sdata = new StaticData();
-
-        populateRegionComboBox(sdata.getRegions());
-        populateServicesLabels(sdata.getServices());
+        
         setupMenus();
         setTextWhenOff(); // default state
         setPollingRate(10); // 10 seconds by default
-
-        //Initialize region to first item in ComboBox (NA)
-        region = jComboBox1.getSelectedItem().toString().toLowerCase();   
+        populateRegionComboBox(sdata.getRegions());
         
+        //Initialize region to first item in ComboBox (NA)
+        region = jComboBox1.getSelectedItem().toString().toLowerCase();
+        
+        populateServicesLabels();
+  
         p = new Parser(region);
         
         // Listen for changes in region combo box state.
@@ -44,6 +46,8 @@ public class GUI extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setCurrentRegion(jComboBox1.getSelectedItem().toString());
+                // Update labels in case naming convention in current region changed.
+                populateServicesLabels();
             }        
         });
         
@@ -51,11 +55,11 @@ public class GUI extends javax.swing.JFrame {
         jToggleButton1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(!jToggleButton1.isSelected()){
-                    setTextWhenOff();
+                if(jToggleButton1.isSelected()){
+                    setTextWhenOn();
                 }
                 else{
-                    setTextWhenOn();
+                    setTextWhenOff();
                 }
             }        
         });  
@@ -70,6 +74,9 @@ public class GUI extends javax.swing.JFrame {
         jComboBox1.setModel(new DefaultComboBoxModel(regions));
     }
     
+    /**
+     * Initializes menu items and adds ActionListeners to these items.
+     */
     private void setupMenus() {
         this.setTitle("League of Legends Server Status Checker");
         this.setResizable(false);
@@ -80,20 +87,40 @@ public class GUI extends javax.swing.JFrame {
         jMenuItem1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String[] intervals = {"5", "10" , "15", "20" , "25" , "30"};
+                ArrayList<String> intervals = new ArrayList<String>();
                 String pollingRate = "";
                 int rate = 0;
                 
+                intervals.add("1");
+                for(int invl = 5; invl <= 60;invl+=5) {
+                    intervals.add(invl +  "");
+                    
+                    if(invl % 20 == 0){
+                        invl += 10;
+                    }
+                                        
+                    if(invl % 10 == 0){
+                        invl += 5;
+                    }
+                }
+                
+                String startingValue = getPollingRate() + "";
+                
                 pollingRate = (String) JOptionPane.showInputDialog(new JFrame(), 
-                    "How often should the server be checked?",
+                    "How often should the server be checked\n(in seconds) ?",
                     "Polling rate",
                     JOptionPane.QUESTION_MESSAGE, 
                     null, 
-                    intervals, 
-                    intervals[0]);
+                    intervals.toArray(), 
+                    intervals.get(intervals.indexOf(startingValue)));
+                    
+                if(pollingRate == null) {   
+                    // User Pressed cancel, get current rate.
+                    pollingRate = startingValue;
+                }
 
                 rate = Integer.parseInt(pollingRate);
-
+                
                 setPollingRate(rate);
             }        
         });
@@ -109,7 +136,7 @@ public class GUI extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String about = 
-                        "Developed by: Chris Meyers || chrismeyers.info\n\n"
+                        "Developed by: Chris Meyers || http://chrismeyers.info\n\n"
                         + "rito-pls is a java application currently under development\n"
                         + "that reports the current League of Legends service statuses\n"
                         + "for a specified region. The applicationqueries the League of\n"
@@ -133,7 +160,18 @@ public class GUI extends javax.swing.JFrame {
      * 
      * @param services The available services to check.
      */
-    private void populateServicesLabels(String[] services) {
+    private void populateServicesLabels() {
+        String[] services;
+        
+        // NA and OCE use "Boards" service
+        if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
+            services = sdata.getServicesB();
+        }
+        // All others use "Forums" service
+        else{
+            services = sdata.getServicesF();
+        }
+        
         jLabel1.setText(services[0]);
         jLabel2.setText(services[1]);
         jLabel3.setText(services[2]);
@@ -163,10 +201,10 @@ public class GUI extends javax.swing.JFrame {
      */
     private void setTextWhenOff() {
         jToggleButton1.setText("Click to check");
-        jLabel5.setText("N/A");
-        jLabel6.setText("N/A");
-        jLabel7.setText("N/A");
-        jLabel8.setText("N/A");
+        jLabel5.setText(POLLING_OFF_MSG);
+        jLabel6.setText(POLLING_OFF_MSG);
+        jLabel7.setText(POLLING_OFF_MSG);
+        jLabel8.setText(POLLING_OFF_MSG);
         deColorize();
     }
     
@@ -200,31 +238,33 @@ public class GUI extends javax.swing.JFrame {
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                int i = 0;
-                while(jToggleButton1.isSelected()){
-                    //p.pollTest(i, getCurrentRegion());
-                    i++;
-                    try {
-                        // Set current status for each service.
-                        ArrayList<String> status = new ArrayList<String>();
-                        status = p.getStatus(getCurrentRegion());
-                        jLabel5.setText(status.get(0));
-                        jLabel6.setText(status.get(1));
-                        jLabel7.setText(status.get(2));
-                        jLabel8.setText(status.get(3));
-                        
-                        // Change font color.
-                        colorize();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                    
-                    try {
-                        // Refresh server status, default is 10 seconds
-                        Thread.sleep(getPollingRate() * 1000);
-                        p.pollTest(getPollingRate(), getCurrentRegion());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                synchronized(p) {
+                    //int i = 0;
+                    ArrayList<String> status = new ArrayList<String>();
+                    while(jToggleButton1.isSelected()){
+                        //p.pollTest(i, getCurrentRegion());
+                        //i++;
+                        try {
+                            // Set current status for each service.
+                            status = p.getStatus(getCurrentRegion());
+                            jLabel5.setText(status.get(0));
+                            jLabel6.setText(status.get(1));
+                            jLabel7.setText(status.get(2));
+                            jLabel8.setText(status.get(3));
+
+                            // Change font color.
+                            colorize();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+
+                        try {
+                            // Refresh server status, default is 10 seconds
+                            Thread.sleep(getPollingRate() * 1000);
+                            p.pollTest(getPollingRate(), getCurrentRegion());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -253,7 +293,7 @@ public class GUI extends javax.swing.JFrame {
                     jLabel6.setForeground(Color.green);
                 }
                 else if(jLabel6.getText().equals("Offline")){
-                    jLabel5.setForeground(Color.red);
+                    jLabel6.setForeground(Color.red);
                 }
                 else if(jLabel6.getText().equals("Alert")){
                     jLabel6.setForeground(Color.yellow);
@@ -287,7 +327,7 @@ public class GUI extends javax.swing.JFrame {
                     jLabel8.setForeground(Color.yellow);
                 }
                 else if(jLabel8.getText().equals("Deploying")){
-                    jLabel5.setForeground(Color.blue);
+                    jLabel8.setForeground(Color.blue);
                 }
                 
                 
@@ -304,22 +344,22 @@ public class GUI extends javax.swing.JFrame {
      */
     private void deColorize() {
         //=================Boards service label=================
-        if(jLabel5.getText().equals("N/A")){
+        if(jLabel5.getText().equals(POLLING_OFF_MSG)){
             jLabel5.setForeground(Color.black);
         }
         
         //=================Game service label=================
-        if(jLabel6.getText().equals("N/A")){
+        if(jLabel6.getText().equals(POLLING_OFF_MSG)){
             jLabel6.setForeground(Color.black);
         }
         
         //=================Store service label=================
-        if(jLabel7.getText().equals("N/A")){
+        if(jLabel7.getText().equals(POLLING_OFF_MSG)){
             jLabel7.setForeground(Color.black);
         }
         
         //=================Website service label=================
-        if(jLabel8.getText().equals("N/A")){
+        if(jLabel8.getText().equals(POLLING_OFF_MSG)){
             jLabel8.setForeground(Color.black);
         }
     }
