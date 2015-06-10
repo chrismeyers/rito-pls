@@ -5,6 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -240,17 +242,33 @@ public class GUI extends javax.swing.JFrame {
             public void run() {
                 synchronized(p) {
                     //int i = 0;
-                    ArrayList<String> status = new ArrayList<String>();
+                    HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo = new HashMap();
+                    HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues = new HashMap();
                     while(jToggleButton1.isSelected()){
                         //p.pollTest(i, getCurrentRegion());
                         //i++;
                         try {
                             // Set current status for each service.
-                            status = p.getStatus(getCurrentRegion());
-                            jLabel5.setText(status.get(0));
-                            jLabel6.setText(status.get(1));
-                            jLabel7.setText(status.get(2));
-                            jLabel8.setText(status.get(3));
+                            statusInfo = p.getStatus(getCurrentRegion());
+                            
+                            if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
+                                // NA and OCE use "Boards" service.
+                                statusValues = statusInfo.get("Boards");
+                            }
+                            else{
+                                // All other regions use "Forums" service.
+                                statusValues = statusInfo.get("Forums");
+                            }
+                            jLabel5.setText(formatOutput(statusValues.keySet().toString()));
+                            
+                            statusValues = statusInfo.get("Game");
+                            jLabel6.setText(formatOutput(statusValues.keySet().toString()));
+                                                        
+                            statusValues = statusInfo.get("Store");
+                            jLabel7.setText(formatOutput(statusValues.keySet().toString()));
+                            
+                            statusValues = statusInfo.get("Website");
+                            jLabel8.setText(formatOutput(statusValues.keySet().toString()));
 
                             // Change font color.
                             colorize();
@@ -269,6 +287,12 @@ public class GUI extends javax.swing.JFrame {
                 }
             }
             
+            private String formatOutput(String raw) {
+                // Remove brackets
+                String formatted = raw.replaceAll("[\\[\\]]", "");
+
+                return formatted;
+            }
             /**
              * Change the color of service status labels based on current state
              * of server.

@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class parses the current League of Legends service status data for a 
@@ -89,21 +91,65 @@ public class Parser {
      * @return The status of the specified service in the specified region.
      * @throws IOException 
      */
-    public ArrayList<String> getStatus(String region) throws IOException {
+    public HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> 
+                                        getStatus(String region) throws IOException {//ArrayList<String> getStatus(String region) throws IOException {
         JsonElement jelem = new JsonParser().parse(getUrlData(buildUrl(region)));
         JsonObject jobj = jelem.getAsJsonObject();
-        JsonArray jarr = jobj.getAsJsonArray("services");
+        JsonArray servicesArr = jobj.getAsJsonArray("services");
+        JsonArray incidentsArr;
+        JsonArray updatesArr;
         
-        ArrayList<String> status = new ArrayList<String>();
+        String service, status;
+        HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo = new HashMap();
         
-        for(int i = 0; i < jarr.size(); i++) {
-            jobj = jarr.get(i).getAsJsonObject();
-            status.add(formatOutput(jobj.get("status").toString()));
-            //String serv = formatOutput(jobj.get("name").toString());
-            //System.out.println(region + " :: " + serv + ": " + status.get(i));
+        HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues = new HashMap();
+        ArrayList<ArrayList<ArrayList<String>>> incidents = new ArrayList<ArrayList<ArrayList<String>>>();
+        ArrayList<ArrayList<String>> updates = new ArrayList<ArrayList<String>>();
+        ArrayList<String> updateInfo = new ArrayList<String>();
+
+        for(int i = 0; i < servicesArr.size(); i++) {
+            jobj = servicesArr.get(i).getAsJsonObject();
+            
+            service = formatOutput(jobj.get("name").toString());
+            status =  formatOutput(jobj.get("status").toString());       
+
+            incidentsArr = jobj.getAsJsonArray("incidents");
+            
+            // If there are any incidents, store them.
+            if(incidentsArr.size() > 0) {
+                // Get each incident.
+                for(int j = 0; j < incidentsArr.size(); j++) {
+                    jobj = incidentsArr.get(j).getAsJsonObject();
+                    updatesArr = jobj.getAsJsonArray("updates");
+                    
+                    // Get information for each update.
+                    for(int k = 0; k < updatesArr.size(); k++) {
+                        jobj = updatesArr.get(k).getAsJsonObject();
+                        
+                        // Add updated_at
+                        updateInfo.add(formatOutput(jobj.get("severity").toString()));
+                        // Add updated_at
+                        updateInfo.add(formatOutput(jobj.get("updated_at").toString()));
+                        // Add content
+                        updateInfo.add(formatOutput(jobj.get("content").toString()));
+                        
+                        updates.add((ArrayList)updateInfo.clone());
+                        updateInfo.clear();
+                    }
+                    
+                    //updateInfo.add(formatOutput(jobj.get("content").toString()));
+                    //updates.add(formatOutput(jobj.get("updates").toString()));
+                    incidents.add((ArrayList)updates.clone());
+                    updates.clear();
+                }
+            }
+            statusValues.put(status, (ArrayList)incidents.clone());
+            statusInfo.put(service, (HashMap)statusValues.clone());
+            incidents.clear();
+            statusValues.clear();
         }
         
-        return status;
+        return statusInfo;
     }
     
     /**
