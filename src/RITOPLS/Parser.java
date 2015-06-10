@@ -136,9 +136,7 @@ public class Parser {
                         updates.add((ArrayList)updateInfo.clone());
                         updateInfo.clear();
                     }
-                    
-                    //updateInfo.add(formatOutput(jobj.get("content").toString()));
-                    //updates.add(formatOutput(jobj.get("updates").toString()));
+
                     incidents.add((ArrayList)updates.clone());
                     updates.clear();
                 }

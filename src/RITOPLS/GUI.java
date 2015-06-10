@@ -6,9 +6,9 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 /**
@@ -23,6 +23,8 @@ public class GUI extends javax.swing.JFrame {
     private final StaticData sdata;
     private int pollingRate;
     private static final String POLLING_OFF_MSG = "N/A";
+    private JLabel[] serviceLabels;
+    private JLabel[] statusLabels;
     
     /**
      * Creates new form GUI
@@ -30,6 +32,8 @@ public class GUI extends javax.swing.JFrame {
     public GUI() throws IOException {
         initComponents();
         sdata = new StaticData();
+        serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
+        statusLabels = new JLabel[]{jLabel5, jLabel6, jLabel7, jLabel8};
         
         setupMenus();
         setTextWhenOff(); // default state
@@ -174,10 +178,10 @@ public class GUI extends javax.swing.JFrame {
             services = sdata.getServicesF();
         }
         
-        jLabel1.setText(services[0]);
-        jLabel2.setText(services[1]);
-        jLabel3.setText(services[2]);
-        jLabel4.setText(services[3]);
+        for(int i = 0; i < serviceLabels.length; i++) {
+            JLabel label = serviceLabels[i];
+            label.setText(services[i]);
+        }
     }
     
     /**
@@ -203,11 +207,12 @@ public class GUI extends javax.swing.JFrame {
      */
     private void setTextWhenOff() {
         jToggleButton1.setText("Click to check");
-        jLabel5.setText(POLLING_OFF_MSG);
-        jLabel6.setText(POLLING_OFF_MSG);
-        jLabel7.setText(POLLING_OFF_MSG);
-        jLabel8.setText(POLLING_OFF_MSG);
-        deColorize();
+        
+        for(int i = 0; i < statusLabels.length; i++){
+            JLabel label = statusLabels[i];
+            label.setText(POLLING_OFF_MSG);
+            decolorize(label);
+        }
     }
     
     /**
@@ -244,34 +249,17 @@ public class GUI extends javax.swing.JFrame {
                     //int i = 0;
                     HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo = new HashMap();
                     HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues = new HashMap();
+                    
                     while(jToggleButton1.isSelected()){
                         //p.pollTest(i, getCurrentRegion());
                         //i++;
                         try {
                             // Set current status for each service.
                             statusInfo = p.getStatus(getCurrentRegion());
+                            setStatusStrings(statusInfo, statusValues);
                             
-                            if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
-                                // NA and OCE use "Boards" service.
-                                statusValues = statusInfo.get("Boards");
-                            }
-                            else{
-                                // All other regions use "Forums" service.
-                                statusValues = statusInfo.get("Forums");
-                            }
-                            jLabel5.setText(formatOutput(statusValues.keySet().toString()));
-                            
-                            statusValues = statusInfo.get("Game");
-                            jLabel6.setText(formatOutput(statusValues.keySet().toString()));
-                                                        
-                            statusValues = statusInfo.get("Store");
-                            jLabel7.setText(formatOutput(statusValues.keySet().toString()));
-                            
-                            statusValues = statusInfo.get("Website");
-                            jLabel8.setText(formatOutput(statusValues.keySet().toString()));
+                            // TODO: deal with incidents 
 
-                            // Change font color.
-                            colorize();
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         }
@@ -285,6 +273,28 @@ public class GUI extends javax.swing.JFrame {
                         }
                     }
                 }
+            }
+            
+            private void setStatusStrings(
+                    HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo,
+                    HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues) {
+                
+                for(int service = 0; service < statusLabels.length; service++) {
+                    if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
+                        // NA and OCE use "Boards" service.
+                        statusValues = statusInfo.get(sdata.getServiceB(service));
+                    }
+                    else {
+                        // All other regions use "Forums" service.
+                        statusValues = statusInfo.get(sdata.getServiceF(service));
+                    }
+                    String status = statusValues.keySet().toString();
+                
+                    statusLabels[service].setText(formatOutput(status));
+                    
+                    colorize(statusLabels[service]);
+                }
+                
             }
             
             /**
@@ -304,64 +314,19 @@ public class GUI extends javax.swing.JFrame {
              * Change the color of service status labels based on current state
              * of server.
              */
-            private void colorize() {
-                //=================Boards service label=================
-                if(jLabel5.getText().equals("Online")) {
-                    jLabel5.setForeground(Color.green);
+            private void colorize(JLabel label) {
+                if(label.getText().equals("Online")) {
+                    label.setForeground(Color.green);
                 }
-                else if(jLabel5.getText().equals("Offline")){
-                    jLabel5.setForeground(Color.red);
+                else if(label.getText().equals("Offline")){
+                    label.setForeground(Color.red);
                 }
-                else if(jLabel5.getText().equals("Alert")){
-                    jLabel5.setForeground(Color.yellow);
+                else if(label.getText().equals("Alert")){
+                    label.setForeground(Color.yellow);
                 }
-                else if(jLabel5.getText().equals("Deploying")){
-                    jLabel5.setForeground(Color.blue);
+                else if(label.getText().equals("Deploying")){
+                    label.setForeground(Color.blue);
                 }
-                
-                //=================Game service label=================
-                if(jLabel6.getText().equals("Online")) {
-                    jLabel6.setForeground(Color.green);
-                }
-                else if(jLabel6.getText().equals("Offline")){
-                    jLabel6.setForeground(Color.red);
-                }
-                else if(jLabel6.getText().equals("Alert")){
-                    jLabel6.setForeground(Color.yellow);
-                }
-                else if(jLabel6.getText().equals("Deploying")){
-                    jLabel6.setForeground(Color.blue);
-                }
-                
-                //=================Store service label=================
-                if(jLabel7.getText().equals("Online")) {
-                    jLabel7.setForeground(Color.green);
-                }
-                else if(jLabel7.getText().equals("Offline")){
-                    jLabel7.setForeground(Color.red);
-                }
-                else if(jLabel7.getText().equals("Alert")){
-                    jLabel7.setForeground(Color.yellow);
-                }
-                else if(jLabel7.getText().equals("Deploying")){
-                    jLabel7.setForeground(Color.blue);
-                }
-                   
-                //=================Website service label=================
-                if(jLabel8.getText().equals("Online")) {
-                    jLabel8.setForeground(Color.green);
-                }
-                else if(jLabel8.getText().equals("Offline")){
-                    jLabel8.setForeground(Color.red);
-                }
-                else if(jLabel8.getText().equals("Alert")){
-                    jLabel8.setForeground(Color.yellow);
-                }
-                else if(jLabel8.getText().equals("Deploying")){
-                    jLabel8.setForeground(Color.blue);
-                }
-                
-                
             }
         };
         
@@ -373,27 +338,13 @@ public class GUI extends javax.swing.JFrame {
      * Reset the server status labels to black when the program is not checking
      * status.
      */
-    private void deColorize() {
+    private void decolorize(JLabel label) {
         //=================Boards service label=================
-        if(jLabel5.getText().equals(POLLING_OFF_MSG)){
-            jLabel5.setForeground(Color.black);
-        }
-        
-        //=================Game service label=================
-        if(jLabel6.getText().equals(POLLING_OFF_MSG)){
-            jLabel6.setForeground(Color.black);
-        }
-        
-        //=================Store service label=================
-        if(jLabel7.getText().equals(POLLING_OFF_MSG)){
-            jLabel7.setForeground(Color.black);
-        }
-        
-        //=================Website service label=================
-        if(jLabel8.getText().equals(POLLING_OFF_MSG)){
-            jLabel8.setForeground(Color.black);
+        if(label.getText().equals(POLLING_OFF_MSG)){
+            label.setForeground(Color.black);
         }
     }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
