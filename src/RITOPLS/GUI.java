@@ -249,6 +249,9 @@ public class GUI extends javax.swing.JFrame {
                     //int i = 0;
                     HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo = new HashMap();
                     HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues = new HashMap();
+                    ArrayList<ArrayList<ArrayList<String>>> services = new ArrayList<ArrayList<ArrayList<String>>>();
+                    ArrayList<ArrayList<String>> incidents = new  ArrayList<ArrayList<String>>();
+                    ArrayList<String> content = new ArrayList<String>();
                     
                     while(jToggleButton1.isSelected()){
                         //p.pollTest(i, getCurrentRegion());
@@ -256,10 +259,8 @@ public class GUI extends javax.swing.JFrame {
                         try {
                             // Set current status for each service.
                             statusInfo = p.getStatus(getCurrentRegion());
-                            setStatusStrings(statusInfo, statusValues);
+                            setStatusStrings(statusInfo, statusValues, services, incidents, content);
                             
-                            // TODO: deal with incidents 
-
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         }
@@ -275,28 +276,55 @@ public class GUI extends javax.swing.JFrame {
                 }
             }
             
+            /**
+             * Set status strings on GUI and handles incidents.
+             * 
+             * @param statusInfo All parsed information.
+             * @param statusValues Contains service statuses.
+             * @param services Contains data for all services.
+             * @param incidents Contains the incidents.
+             * @param content Contains severity, updatedTime and contentString.
+             */
             private void setStatusStrings(
                     HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo,
-                    HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues) {
+                    HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues,
+                    ArrayList<ArrayList<ArrayList<String>>> services,
+                    ArrayList<ArrayList<String>> incidents,
+                    ArrayList<String> content) {
+                
+                String serviceString, severity, updatedTime, contentString = "";
                 
                 for(int service = 0; service < statusLabels.length; service++) {
                     if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
                         // NA and OCE use "Boards" service.
-                        statusValues = statusInfo.get(sdata.getServiceB(service));
+                        serviceString = sdata.getServiceB(service);
+                        statusValues = statusInfo.get(serviceString);
                     }
                     else {
                         // All other regions use "Forums" service.
-                        statusValues = statusInfo.get(sdata.getServiceF(service));
+                        serviceString = sdata.getServiceF(service);
+                        statusValues = statusInfo.get(serviceString);
                     }
                     String status = statusValues.keySet().toString();
                 
                     statusLabels[service].setText(formatOutput(status));
                     
                     colorize(statusLabels[service]);
+                    
+                    // Handle incidents.
+                    services = statusValues.get(formatOutput(status));
+                    
+                    for(int serv = 0; serv < services.size(); serv++){
+                        incidents = services.get(serv);
+                        content = incidents.get(0);
+
+                        severity = content.get(0);
+                        updatedTime = content.get(1);
+                        contentString = content.get(2);
+                        System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
+                    }
                 }
-                
-            }
-            
+            }     
             /**
              * Removes brackets from the status obtained in the HashMap keySet.
              * 
@@ -364,6 +392,10 @@ public class GUI extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
+        jButton4 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -403,6 +435,14 @@ public class GUI extends javax.swing.JFrame {
 
         jLabel8.setText("jLabel8");
 
+        jButton1.setText("jButton1");
+
+        jButton2.setText("jButton1");
+
+        jButton3.setText("jButton1");
+
+        jButton4.setText("jButton1");
+
         jMenu1.setText("File");
 
         jMenuItem1.setText("jMenuItem1");
@@ -427,54 +467,60 @@ public class GUI extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(55, 55, 55)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGap(50, 50, 50)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel8))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel7))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel6))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel5))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(46, 46, 46)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
                         .addComponent(jToggleButton1)))
-                .addContainerGap(69, Short.MAX_VALUE))
+                .addGap(50, 50, 50))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(47, 47, 47)
+                .addGap(36, 36, 36)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jToggleButton1)
                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(26, 26, 26)
+                .addGap(22, 22, 22)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(jLabel5))
+                    .addComponent(jLabel5)
+                    .addComponent(jButton1))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel6))
+                    .addComponent(jLabel6)
+                    .addComponent(jButton2))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(jLabel7))
+                    .addComponent(jLabel7)
+                    .addComponent(jButton3))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
-                    .addComponent(jLabel8))
-                .addContainerGap(73, Short.MAX_VALUE))
+                    .addComponent(jLabel8)
+                    .addComponent(jButton4))
+                .addContainerGap(50, Short.MAX_VALUE))
         );
 
         pack();
@@ -489,6 +535,10 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_jToggleButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
