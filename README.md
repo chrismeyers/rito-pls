@@ -7,7 +7,7 @@ The purpose of this project is to get more practice with Java GUI building and m
 operation takes place on a new thread that allows for the program to function normally while maintaining a periodic server
 checks.
 
-![Application reporting statuses](http://i.imgur.com/6w1Dnre.png)
+![Application reporting statuses](http://i.imgur.com/d60ut4b.png)
 
 ## TODO
 
