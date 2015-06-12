@@ -7,14 +7,15 @@ The purpose of this project is to get more practice with Java GUI building and m
 operation takes place on a new thread that allows for the program to function normally while maintaining a periodic server
 checks.
 
-![Application reporting statuses](http://i.imgur.com/Ob4hAzX.png)
+![Application reporting statuses](http://i.imgur.com/Z0LGytV.png)
 
 ## TODO
 
 1. ~~Add a menu to quit, display Riot's legal statement and change polling increment.~~
-2. Add a pop-up to display the individual incidents for each service experiencing trouble. 
+2. ~~Add a pop-up to display the individual incidents for each service experiencing trouble.~~
 3. ~~Add Title to window~~ and a custom icon.
-4. General cleanup and formatting of GUI.
+4. ~~General cleanup and formatting of GUI.~~
+5. Format incident time.
 
 ##Legal
 
