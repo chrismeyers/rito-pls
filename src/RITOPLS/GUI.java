@@ -26,16 +26,19 @@ public class GUI extends javax.swing.JFrame {
     private final StaticData sdata;
     private int pollingRate;
     private static final String POLLING_OFF_MSG = "N/A";
-    private JLabel[] serviceLabels;
-    private JLabel[] statusLabels;
-    private JButton[] incidentButtons;
+    private final JLabel[] serviceLabels;
+    private final JLabel[] statusLabels;
+    private final JButton[] incidentButtons;
+    private final HashMap<String, ArrayList<String>> allIncidents;
     
     /**
      * Creates new form GUI
+     * @throws java.io.IOException
      */
     public GUI() throws IOException {
         initComponents();
         sdata = new StaticData();
+        allIncidents = new HashMap();
         serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
         statusLabels = new JLabel[]{jLabel5, jLabel6, jLabel7, jLabel8};
         incidentButtons = new JButton[]{jButton1, jButton2, jButton3, jButton4};
@@ -57,8 +60,11 @@ public class GUI extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setCurrentRegion(jComboBox1.getSelectedItem().toString());
+                
                 // Update labels in case naming convention in current region changed.
                 populateServicesLabels();
+                
+                //jTextArea1.setText(setNewTextAreaMessage());
             }        
         });
         
@@ -68,9 +74,11 @@ public class GUI extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 if(jToggleButton1.isSelected()){
                     setTextWhenOn();
+                    jTextArea1.setText(setNewTextAreaMessage());
                 }
                 else{
                     setTextWhenOff();
+                    
                 }
             }        
         });  
@@ -216,17 +224,13 @@ public class GUI extends javax.swing.JFrame {
     private void setTextWhenOff() {
         jToggleButton1.setText("Click to check");
         
-        // Set label and button values
-        for(int i = 0; i < statusLabels.length; i++){
-            JLabel label = statusLabels[i];
-            JButton button = incidentButtons[i];
-            
+        // Set default label values
+        for (JLabel label : statusLabels) {
             label.setText(POLLING_OFF_MSG);
-            button.setEnabled(false);
-            button.setText(POLLING_OFF_MSG);
-            button.setBackground(null);
             decolorize(label);
         }
+        
+        turnAllIncidentButtonsOff();
         
         // Set polling rate info label to blank when polling is off
         jLabel9.setText("Not Currently Polling Server Status.");
@@ -236,8 +240,26 @@ public class GUI extends javax.swing.JFrame {
         jTextArea1.setEditable(false);
         jTextArea1.setLineWrap(true);
         jTextArea1.setWrapStyleWord(true);
-        jTextArea1.setText("No incidents to report!");
+        jTextArea1.setText(setNewTextAreaMessage());
         
+    }
+    
+    private void turnAllIncidentButtonsOff(){
+        for (JButton button : incidentButtons) {
+            button.setEnabled(false);
+            button.setText(POLLING_OFF_MSG);
+            button.setBackground(null);
+        }
+    }
+    
+    private String setNewTextAreaMessage() {
+        for (JButton button : incidentButtons) {
+            if(button.isEnabled()) {
+                return "Incidents available for review.";
+            }       
+        }
+        
+        return "No incidents to report!";
     }
     
     /**
@@ -270,7 +292,7 @@ public class GUI extends javax.swing.JFrame {
         Runnable poll = new Runnable() {
             @Override
             public void run() {
-                //synchronized(p) {
+                synchronized(p) {
                     //int i = 0;
                     HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
                     HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues = new HashMap();
@@ -279,8 +301,6 @@ public class GUI extends javax.swing.JFrame {
                     HashMap<String, String> content = new HashMap();
                     
                     while(jToggleButton1.isSelected()){
-                        //p.pollTest(i, getCurrentRegion());
-                        //i++;
                         try {
                             // Set current status for each service.
                             statusInfo = p.getStatus(getCurrentRegion());
@@ -293,12 +313,13 @@ public class GUI extends javax.swing.JFrame {
                         try {
                             // Refresh server status, default is 10 seconds
                             Thread.sleep(getPollingRate() * 1000);
+                            turnAllIncidentButtonsOff();
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
-                //}
+                }
             }
             
             /**
@@ -318,6 +339,8 @@ public class GUI extends javax.swing.JFrame {
                     HashMap<String, String> content) {
                 
                 String serviceString, severity, updatedTime, contentString = "";
+                ArrayList<String> incidentStrings = new ArrayList<String>();
+                
                 
                 // Set polling rate info label
                 setPollingInfoLabel();
@@ -343,19 +366,23 @@ public class GUI extends javax.swing.JFrame {
                     services = statusValues.get(formatOutput(status));
                     
                     if(!services.isEmpty()) {
-                        for(int serv = 0; serv < services.size(); serv++){
-                            incidents = services.get(serv);
+                        for (HashMap<String, HashMap<String, String>> currentService : services) {
+                            incidents = currentService;
                             content = incidents.get(serviceString);
-
+                            
                             severity = content.get("severity");
                             updatedTime = content.get("updated_at");
                             contentString = content.get("content");
-
-                            populateIncidentButton(service, serviceString, severity, updatedTime, contentString);
+                            
+                            incidentStrings.add("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
+                            
+                            populateIncidentButton(service, serviceString, severity);
+                            allIncidents.put(serviceString, incidentStrings);
                             
                             System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
                         }
                     }
+
                     services.clear();
                 }
             }  
@@ -369,11 +396,12 @@ public class GUI extends javax.swing.JFrame {
              * @param time The last updated time of the incident.
              * @param content What the incident is.
              */
-            private void populateIncidentButton(int service, String serviceString,
-                                                String severity, String time, String content) {
+            private void populateIncidentButton(int service, String serviceString, String severity) {
                 
                 final JButton button = incidentButtons[service];
                 button.setEnabled(true);
+                
+                // TODO: set severity to prioritize the most severe incident in list.
                 
                 switch(severity) {
                     case "Warn":
@@ -406,30 +434,19 @@ public class GUI extends javax.swing.JFrame {
                         button.setText("?");
                         break;
                 }
-                
-                final String currentSeverity = severity;
-                final String currentTime = time;
-                final String currentContent = content;
+
                 final String currentService = serviceString;
                 final JTextArea textarea = jTextArea1;
                 
-                
-                Runnable dialog = new Runnable() {
+                button.addActionListener(new ActionListener() {
                     @Override
-                    public void run() {
-                        button.addActionListener(new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                textarea.setText("");
-                                textarea.append("[" + getCurrentRegion().toUpperCase() +
-                                        " " + currentService + "] :: "  + currentSeverity +
-                                        " :: "+ currentTime + " :: " + currentContent + "\n");
-                            }
-                        });
+                    public void actionPerformed(ActionEvent e) {
+                        textarea.setText("");
+                        for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
+                            textarea.append(allIncidents.get(currentService).get(i) + "\n\n");
+                        }
                     }
-                };
-                Thread dialogThread = new Thread(dialog);
-                dialogThread.start();
+                });
             }
             
             /**
@@ -464,17 +481,22 @@ public class GUI extends javax.swing.JFrame {
              * of server.
              */
             private void colorize(JLabel label) {
-                if(label.getText().equals("Online")) {
-                    label.setForeground(Color.green);
-                }
-                else if(label.getText().equals("Offline")){
-                    label.setForeground(Color.red);
-                }
-                else if(label.getText().equals("Alert")){
-                    label.setForeground(Color.yellow);
-                }
-                else if(label.getText().equals("Deploying")){
-                    label.setForeground(Color.blue);
+                switch (label.getText()) {
+                    case "Online":
+                        label.setForeground(Color.green);
+                        break;
+                    case "Offline":
+                        label.setForeground(Color.red);
+                        break;
+                    case "Alert":
+                        label.setForeground(Color.yellow);
+                        break;
+                    case "Deploying":
+                        label.setForeground(Color.blue);
+                        break;
+                    default:
+                        label.setForeground(Color.magenta);
+                        break;
                 }
             }
         };

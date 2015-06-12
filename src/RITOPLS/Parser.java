@@ -8,7 +8,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class parses the current League of Legends service status data for a 
@@ -44,7 +43,7 @@ public class Parser {
         try {
             URL statusUrlData = new URL(urlString);
             reader = new BufferedReader(new InputStreamReader(statusUrlData.openStream()));
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             int read;
             char[] chars = new char[4096];
             while ((read = reader.read(chars)) != -1) {
@@ -87,7 +86,6 @@ public class Parser {
      * Gson is used as the parsing utility.
      * 
      * @param region The region selected by the user.
-     * @param service The service to parse.
      * @return The status of the specified service in the specified region.
      * @throws IOException 
      */
