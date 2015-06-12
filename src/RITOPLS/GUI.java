@@ -30,6 +30,7 @@ public class GUI extends javax.swing.JFrame {
     private final JLabel[] statusLabels;
     private final JButton[] incidentButtons;
     private final HashMap<String, ArrayList<String>> allIncidents;
+    private boolean regionChanged;
     
     /**
      * Creates new form GUI
@@ -39,6 +40,7 @@ public class GUI extends javax.swing.JFrame {
         initComponents();
         sdata = new StaticData();
         allIncidents = new HashMap();
+        regionChanged = true;
         serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
         statusLabels = new JLabel[]{jLabel5, jLabel6, jLabel7, jLabel8};
         incidentButtons = new JButton[]{jButton1, jButton2, jButton3, jButton4};
@@ -63,8 +65,8 @@ public class GUI extends javax.swing.JFrame {
                 
                 // Update labels in case naming convention in current region changed.
                 populateServicesLabels();
-                
-                //jTextArea1.setText(setNewTextAreaMessage());
+
+                regionChanged = true;
             }        
         });
         
@@ -74,7 +76,6 @@ public class GUI extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 if(jToggleButton1.isSelected()){
                     setTextWhenOn();
-                    jTextArea1.setText(setNewTextAreaMessage());
                 }
                 else{
                     setTextWhenOff();
@@ -314,6 +315,10 @@ public class GUI extends javax.swing.JFrame {
                             // Set current status for each service.
                             statusInfo = p.getStatus(getCurrentRegion());
                             setStatusStrings(statusInfo, statusValues, services, incidents, content);
+                            if(regionChanged) {
+                                jTextArea1.setText(setNewTextAreaMessage());
+                                regionChanged = false;
+                            }
                             
                         } catch (IOException ex) {
                             ex.printStackTrace();
@@ -323,6 +328,7 @@ public class GUI extends javax.swing.JFrame {
                             // Refresh server status, default is 10 seconds
                             Thread.sleep(getPollingRate() * 1000);
                             turnAllIncidentButtonsOff();
+
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -391,7 +397,7 @@ public class GUI extends javax.swing.JFrame {
                             System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
                         }
                     }
-
+                    
                     services.clear();
                 }
             }  
@@ -453,6 +459,8 @@ public class GUI extends javax.swing.JFrame {
                         textarea.setText("");
                         for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
                             textarea.append(allIncidents.get(currentService).get(i) + "\n\n");
+                            // "Scroll" to top of jTextBox1
+                            textarea.setCaretPosition(0);
                         }
                     }
                 });
@@ -509,7 +517,7 @@ public class GUI extends javax.swing.JFrame {
                 }
             }
         };
-        
+
         Thread pollThread = new Thread(poll);
         pollThread.start();
     }
