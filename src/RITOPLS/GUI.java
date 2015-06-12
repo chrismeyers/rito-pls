@@ -234,6 +234,8 @@ public class GUI extends javax.swing.JFrame {
         
         // Setup incident textbox.
         jTextArea1.setEditable(false);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setWrapStyleWord(true);
         jTextArea1.setText("No incidents to report!");
         
     }
