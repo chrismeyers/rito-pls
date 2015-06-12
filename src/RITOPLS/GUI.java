@@ -244,6 +244,9 @@ public class GUI extends javax.swing.JFrame {
         
     }
     
+    /**
+     * Sets all incident buttons to default "off" state
+     */
     private void turnAllIncidentButtonsOff(){
         for (JButton button : incidentButtons) {
             button.setEnabled(false);
@@ -252,6 +255,12 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Returns a string to be used when setting jTextArea1 based on if there
+     * are currently any incidents.
+     * 
+     * @return A string to be used to populate the default jTextArea1.
+     */
     private String setNewTextAreaMessage() {
         for (JButton button : incidentButtons) {
             if(button.isEnabled()) {
