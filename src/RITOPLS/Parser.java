@@ -91,7 +91,7 @@ public class Parser {
      * @return The status of the specified service in the specified region.
      * @throws IOException 
      */
-    public HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> 
+    public HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> 
                                         getStatus(String region) throws IOException {
         JsonElement jelem = new JsonParser().parse(getUrlData(buildUrl(region)));
         JsonObject jobj = jelem.getAsJsonObject();
@@ -100,12 +100,11 @@ public class Parser {
         JsonArray updatesArr;
         
         String service, status;
-        HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo = new HashMap();
-        
-        HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues = new HashMap();
-        ArrayList<ArrayList<ArrayList<String>>> incidents = new ArrayList<ArrayList<ArrayList<String>>>();
-        ArrayList<ArrayList<String>> updates = new ArrayList<ArrayList<String>>();
-        ArrayList<String> updateInfo = new ArrayList<String>();
+        HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
+        HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues = new HashMap();
+        ArrayList<HashMap<String, HashMap<String, String>>> services = new ArrayList<HashMap<String, HashMap<String, String>>>();
+        HashMap<String, HashMap<String, String>> incidents = new HashMap();
+        HashMap<String, String> content = new HashMap();
 
         for(int i = 0; i < servicesArr.size(); i++) {
             jobj = servicesArr.get(i).getAsJsonObject();
@@ -126,24 +125,24 @@ public class Parser {
                     for(int k = 0; k < updatesArr.size(); k++) {
                         jobj = updatesArr.get(k).getAsJsonObject();
                         
+                        // Add severity
+                        content.put("severity", formatOutput(jobj.get("severity").toString()));
                         // Add updated_at
-                        updateInfo.add(formatOutput(jobj.get("severity").toString()));
-                        // Add updated_at
-                        updateInfo.add(formatOutput(jobj.get("updated_at").toString()));
+                        content.put("updated_at", formatOutput(jobj.get("updated_at").toString()));
                         // Add content
-                        updateInfo.add(formatOutput(jobj.get("content").toString()));
+                        content.put("content", formatOutput(jobj.get("content").toString()));
                         
-                        updates.add((ArrayList)updateInfo.clone());
-                        updateInfo.clear();
+                        incidents.put(service, (HashMap)content.clone());
+                        content.clear();
                     }
 
-                    incidents.add((ArrayList)updates.clone());
-                    updates.clear();
+                    services.add((HashMap)incidents.clone());
                 }
             }
-            statusValues.put(status, (ArrayList)incidents.clone());
+            
+            statusValues.put(status, (ArrayList)services.clone());
+            services.clear(); // Make sure old incidents aren't copied if current service has no incidents.
             statusInfo.put(service, (HashMap)statusValues.clone());
-            incidents.clear();
             statusValues.clear();
         }
         

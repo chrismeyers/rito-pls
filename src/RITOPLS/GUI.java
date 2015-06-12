@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 
 /**
  * This class provides a GUI interface that reflects the status of League of Legends 
@@ -25,6 +28,7 @@ public class GUI extends javax.swing.JFrame {
     private static final String POLLING_OFF_MSG = "N/A";
     private JLabel[] serviceLabels;
     private JLabel[] statusLabels;
+    private JButton[] incidentButtons;
     
     /**
      * Creates new form GUI
@@ -34,10 +38,11 @@ public class GUI extends javax.swing.JFrame {
         sdata = new StaticData();
         serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
         statusLabels = new JLabel[]{jLabel5, jLabel6, jLabel7, jLabel8};
+        incidentButtons = new JButton[]{jButton1, jButton2, jButton3, jButton4};
         
         setupMenus();
         setTextWhenOff(); // default state
-        setPollingRate(10); // 10 seconds by default
+        setPollingRate(5); // 5 seconds by default
         populateRegionComboBox(sdata.getRegions());
         
         //Initialize region to first item in ComboBox (NA)
@@ -90,6 +95,7 @@ public class GUI extends javax.swing.JFrame {
         jMenuItem2.setText("Quit");
         jMenuItem3.setText("About");
         
+        // Polling rate menu item listener
         jMenuItem1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -131,6 +137,7 @@ public class GUI extends javax.swing.JFrame {
             }        
         });
         
+        // Quit menu item listener
         jMenuItem2.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -138,6 +145,7 @@ public class GUI extends javax.swing.JFrame {
             }        
         });
         
+        // About menu item listener
         jMenuItem3.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -208,11 +216,26 @@ public class GUI extends javax.swing.JFrame {
     private void setTextWhenOff() {
         jToggleButton1.setText("Click to check");
         
+        // Set label and button values
         for(int i = 0; i < statusLabels.length; i++){
             JLabel label = statusLabels[i];
+            JButton button = incidentButtons[i];
+            
             label.setText(POLLING_OFF_MSG);
+            button.setEnabled(false);
+            button.setText(POLLING_OFF_MSG);
+            button.setBackground(null);
             decolorize(label);
         }
+        
+        // Set polling rate info label to blank when polling is off
+        jLabel9.setText("Not Currently Polling Server Status.");
+        jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        // Setup incident textbox.
+        jTextArea1.setEditable(false);
+        jTextArea1.setText("No incidents to report!");
+        
     }
     
     /**
@@ -242,16 +265,16 @@ public class GUI extends javax.swing.JFrame {
         
         // Creates a second thread to periodically check for a change in server
         // status.
-        Runnable r = new Runnable() {
+        Runnable poll = new Runnable() {
             @Override
             public void run() {
-                synchronized(p) {
+                //synchronized(p) {
                     //int i = 0;
-                    HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo = new HashMap();
-                    HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues = new HashMap();
-                    ArrayList<ArrayList<ArrayList<String>>> services = new ArrayList<ArrayList<ArrayList<String>>>();
-                    ArrayList<ArrayList<String>> incidents = new  ArrayList<ArrayList<String>>();
-                    ArrayList<String> content = new ArrayList<String>();
+                    HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
+                    HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues = new HashMap();
+                    ArrayList<HashMap<String, HashMap<String, String>>> services = new ArrayList<HashMap<String, HashMap<String, String>>>();
+                    HashMap<String, HashMap<String, String>> incidents = new HashMap();
+                    HashMap<String, String> content = new HashMap();
                     
                     while(jToggleButton1.isSelected()){
                         //p.pollTest(i, getCurrentRegion());
@@ -273,7 +296,7 @@ public class GUI extends javax.swing.JFrame {
                             e.printStackTrace();
                         }
                     }
-                }
+                //}
             }
             
             /**
@@ -286,13 +309,16 @@ public class GUI extends javax.swing.JFrame {
              * @param content Contains severity, updatedTime and contentString.
              */
             private void setStatusStrings(
-                    HashMap<String, HashMap<String, ArrayList<ArrayList<ArrayList<String>>>>> statusInfo,
-                    HashMap<String, ArrayList<ArrayList<ArrayList<String>>>> statusValues,
-                    ArrayList<ArrayList<ArrayList<String>>> services,
-                    ArrayList<ArrayList<String>> incidents,
-                    ArrayList<String> content) {
+                    HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo,
+                    HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues,
+                    ArrayList<HashMap<String, HashMap<String, String>>> services,
+                    HashMap<String, HashMap<String, String>> incidents,
+                    HashMap<String, String> content) {
                 
                 String serviceString, severity, updatedTime, contentString = "";
+                
+                // Set polling rate info label
+                setPollingInfoLabel();
                 
                 for(int service = 0; service < statusLabels.length; service++) {
                     if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
@@ -314,17 +340,110 @@ public class GUI extends javax.swing.JFrame {
                     // Handle incidents.
                     services = statusValues.get(formatOutput(status));
                     
-                    for(int serv = 0; serv < services.size(); serv++){
-                        incidents = services.get(serv);
-                        content = incidents.get(0);
+                    if(!services.isEmpty()) {
+                        for(int serv = 0; serv < services.size(); serv++){
+                            incidents = services.get(serv);
+                            content = incidents.get(serviceString);
 
-                        severity = content.get(0);
-                        updatedTime = content.get(1);
-                        contentString = content.get(2);
-                        System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
+                            severity = content.get("severity");
+                            updatedTime = content.get("updated_at");
+                            contentString = content.get("content");
+
+                            populateIncidentButton(service, serviceString, severity, updatedTime, contentString);
+                            
+                            System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
+                        }
                     }
+                    services.clear();
                 }
-            }     
+            }  
+            
+            /**
+             * Updates incident buttons based on severity and provides a pop-up
+             * box containing the incident(s).
+             * 
+             * @param service The current service that has an incident.
+             * @param severity The severity of the current incident.
+             * @param time The last updated time of the incident.
+             * @param content What the incident is.
+             */
+            private void populateIncidentButton(int service, String serviceString,
+                                                String severity, String time, String content) {
+                
+                final JButton button = incidentButtons[service];
+                button.setEnabled(true);
+                
+                switch(severity) {
+                    case "Warn":
+                        button.setForeground(Color.white);
+                        button.setBackground(Color.black);
+                        button.setText("!");
+                        break;
+                        
+                    case "Info":
+                        button.setForeground(Color.white);
+                        button.setBackground(Color.black);
+                        button.setText("!");
+                        break;
+                        
+                    case "Alert":
+                        button.setForeground(Color.yellow);
+                        button.setBackground(Color.black);
+                        button.setText("!!");
+                        break;
+                        
+                    case "Error":
+                        button.setForeground(Color.red);
+                        button.setBackground(Color.black);
+                        button.setText("!!!");
+                        break;
+                        
+                    default:
+                        button.setForeground(Color.magenta);
+                        button.setBackground(Color.black);
+                        button.setText("?");
+                        break;
+                }
+                
+                final String currentSeverity = severity;
+                final String currentTime = time;
+                final String currentContent = content;
+                final String currentService = serviceString;
+                final JTextArea textarea = jTextArea1;
+                
+                
+                Runnable dialog = new Runnable() {
+                    @Override
+                    public void run() {
+                        button.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                textarea.setText("");
+                                textarea.append("[" + getCurrentRegion().toUpperCase() +
+                                        " " + currentService + "] :: "  + currentSeverity +
+                                        " :: "+ currentTime + " :: " + currentContent + "\n");
+                            }
+                        });
+                    }
+                };
+                Thread dialogThread = new Thread(dialog);
+                dialogThread.start();
+            }
+            
+            /**
+             * Sets the value of the polling info label (jLabel9) based on the 
+             * current polling rate.
+             */
+            private void setPollingInfoLabel() {
+                if(getPollingRate() == 1) {
+                    jLabel9.setText("Refreshing every " + getPollingRate() + " second...");
+                }
+                else {
+                    jLabel9.setText("Refreshing every " + getPollingRate() + " seconds...");
+                }
+                jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
+            }
+            
             /**
              * Removes brackets from the status obtained in the HashMap keySet.
              * 
@@ -358,8 +477,8 @@ public class GUI extends javax.swing.JFrame {
             }
         };
         
-        Thread checkThread = new Thread(r);
-        checkThread.start();
+        Thread pollThread = new Thread(poll);
+        pollThread.start();
     }
     
     /**
@@ -367,7 +486,6 @@ public class GUI extends javax.swing.JFrame {
      * status.
      */
     private void decolorize(JLabel label) {
-        //=================Boards service label=================
         if(label.getText().equals(POLLING_OFF_MSG)){
             label.setForeground(Color.black);
         }
@@ -396,6 +514,9 @@ public class GUI extends javax.swing.JFrame {
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
+        jLabel9 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -443,6 +564,12 @@ public class GUI extends javax.swing.JFrame {
 
         jButton4.setText("jButton1");
 
+        jLabel9.setText("jLabel9");
+
+        jTextArea1.setColumns(20);
+        jTextArea1.setRows(5);
+        jScrollPane1.setViewportView(jTextArea1);
+
         jMenu1.setText("File");
 
         jMenuItem1.setText("jMenuItem1");
@@ -467,9 +594,18 @@ public class GUI extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(120, 120, 120)
+                .addComponent(jLabel9)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(50, 50, 50)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
+                        .addComponent(jToggleButton1))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel4)
@@ -482,15 +618,11 @@ public class GUI extends javax.swing.JFrame {
                             .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
-                        .addComponent(jToggleButton1)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
+                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGap(50, 50, 50))
         );
         layout.setVerticalGroup(
@@ -520,7 +652,11 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(jLabel4)
                     .addComponent(jLabel8)
                     .addComponent(jButton4))
-                .addContainerGap(50, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jLabel9)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
@@ -548,12 +684,15 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JToggleButton jToggleButton1;
     // End of variables declaration//GEN-END:variables
 
