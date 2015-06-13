@@ -120,21 +120,23 @@ public class Parser {
                     updatesArr = jobj.getAsJsonArray("updates");
                     
                     // Get information for each update.
-                    for(int k = 0; k < updatesArr.size(); k++) {
-                        jobj = updatesArr.get(k).getAsJsonObject();
-                        
-                        // Add severity
-                        content.put("severity", formatOutput(jobj.get("severity").toString()));
-                        // Add updated_at
-                        content.put("updated_at", formatOutput(jobj.get("updated_at").toString()));
-                        // Add content
-                        content.put("content", formatOutput(jobj.get("content").toString()));
-                        
-                        incidents.put(service, (HashMap)content.clone());
-                        content.clear();
-                    }
+                    if(updatesArr.size() > 0){
+                        for(int k = 0; k < updatesArr.size(); k++) {
+                            jobj = updatesArr.get(k).getAsJsonObject();
 
-                    services.add((HashMap)incidents.clone());
+                            // Add severity
+                            content.put("severity", formatOutput(jobj.get("severity").toString()));
+                            // Add updated_at
+                            content.put("updated_at", formatOutput(jobj.get("updated_at").toString()));
+                            // Add content
+                            content.put("content", formatOutput(jobj.get("content").toString()));
+
+                            incidents.put(service, (HashMap)content.clone());
+                            content.clear();
+                        }
+
+                        services.add((HashMap)incidents.clone());
+                    }
                 }
             }
             

@@ -324,10 +324,11 @@ public class GUI extends javax.swing.JFrame {
                         }
 
                         try {
+                            
                             // Refresh server status, default is 10 seconds
                             Thread.sleep(getPollingRate() * 1000);
                             turnAllIncidentButtonsOff();
-
+                            
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -471,10 +472,10 @@ public class GUI extends javax.swing.JFrame {
              */
             private void setPollingInfoLabel() {
                 if(getPollingRate() == 1) {
-                    jLabel9.setText("Refreshing every " + getPollingRate() + " second...");
+                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " every " + getPollingRate() + " second...");
                 }
                 else {
-                    jLabel9.setText("Refreshing every " + getPollingRate() + " seconds...");
+                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " every " + getPollingRate() + " seconds...");
                 }
                 jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
             }
