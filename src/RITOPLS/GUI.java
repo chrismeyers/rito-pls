@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -76,10 +78,6 @@ public class GUI extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 if(jToggleButton1.isSelected()){
                     setTextWhenOn();
-                }
-                else{
-                    setTextWhenOff();
-                    
                 }
             }        
         });  
@@ -321,17 +319,18 @@ public class GUI extends javax.swing.JFrame {
                             
                         } catch (IOException ex) {
                             ex.printStackTrace();
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
                         }
 
                         try {
-                            
                             // Refresh server status, default is 10 seconds
                             Thread.sleep(getPollingRate() * 1000);
                             turnAllIncidentButtonsOff();
                             
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
                         }
                     }
                 }
@@ -351,7 +350,7 @@ public class GUI extends javax.swing.JFrame {
                     HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues,
                     ArrayList<HashMap<String, HashMap<String, String>>> services,
                     HashMap<String, HashMap<String, String>> incidents,
-                    HashMap<String, String> content) {
+                    HashMap<String, String> content) throws InterruptedException {
                 
                 String serviceString, severity, updatedTime, contentString = "";
                 ArrayList<String> incidentStrings = new ArrayList<String>();
@@ -470,14 +469,38 @@ public class GUI extends javax.swing.JFrame {
              * Sets the value of the polling info label (jLabel9) based on the 
              * current polling rate.
              */
-            private void setPollingInfoLabel() {
-                if(getPollingRate() == 1) {
-                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " every " + getPollingRate() + " second...");
-                }
-                else {
-                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " every " + getPollingRate() + " seconds...");
-                }
-                jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
+            private synchronized void setPollingInfoLabel() throws InterruptedException {
+                Runnable countdown = new Runnable() {
+                    @Override
+                    public void run() {
+                        for(int i = getPollingRate(); i > -1; --i) {
+                            if(i == 1) {
+                                jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " second...");
+                            }
+                            else {
+                                jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " seconds...");
+                            }
+                            jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
+
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            
+                            if(!jToggleButton1.isSelected()){
+                                jToggleButton1.setText("Stopping in " + (i - 1) + "s" );
+                            }
+                        }
+                        
+                        if(!jToggleButton1.isSelected()) {
+                            setTextWhenOff();
+                        }
+                    }
+                };
+                
+                Thread counter = new Thread(countdown);
+                counter.start();
             }
             
             /**
