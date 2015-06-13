@@ -65,10 +65,14 @@ public class GUI extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 setCurrentRegion(jComboBox1.getSelectedItem().toString());
                 
-                // Update labels in case naming convention in current region changed.
-                populateServicesLabels();
+                // Keeps jToggleButton1's text from incorrectly changing to 
+                //"Checking..."when the region is changed and jToggleButton is disabled.
+                if(jToggleButton1.isSelected()) { 
+                    // Update labels in case naming convention in current region changed.
+                    populateServicesLabels();
 
-                regionChanged = true;
+                    regionChanged = true;
+                }
             }        
         });
         
