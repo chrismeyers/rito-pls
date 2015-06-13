@@ -63,7 +63,7 @@ public class Parser {
      * Builds a URL to reflect the region the user selected.
      * 
      * @param region The region selected by the user.
-     * @return 
+     * @return The API status url containing the current region.
      */
     private String buildUrl(String region) {
         return baseUrl + region;

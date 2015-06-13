@@ -181,7 +181,6 @@ public class GUI extends javax.swing.JFrame {
     /**
      * Populates jLabel1-4 with the available services.
      * 
-     * @param services The available services to check.
      */
     private void populateServicesLabels() {
         String[] services;
