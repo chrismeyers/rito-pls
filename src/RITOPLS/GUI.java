@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.ImageIcon;
 
 /**
  * This class provides a GUI interface that reflects the status of League of Legends 
@@ -23,6 +24,8 @@ import javax.swing.SwingConstants;
  * @author Chris Meyers
  */
 public class GUI extends javax.swing.JFrame {
+    private static final String root = System.getProperty("user.dir") + "/Resources/";
+    
     private String region;
     private final Parser p;
     private final StaticData sdata;
@@ -102,6 +105,7 @@ public class GUI extends javax.swing.JFrame {
     private void setupMenus() {
         this.setTitle("League of Legends Server Status Checker");
         this.setResizable(false);
+        setFormIcon();
         jMenuItem1.setText("Set Polling Rate");
         jMenuItem2.setText("Quit");
         jMenuItem3.setText("About");
@@ -185,17 +189,8 @@ public class GUI extends javax.swing.JFrame {
      * 
      */
     private void populateServicesLabels() {
-        String[] services;
-        
-        // NA and OCE use "Boards" service
-        if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
-            services = sdata.getServicesB();
-        }
-        // All others use "Forums" service
-        else{
-            services = sdata.getServicesF();
-        }
-        
+        String[] services = getCurrentServiceNames();
+ 
         for(int i = 0; i < serviceLabels.length; i++) {
             JLabel label = serviceLabels[i];
             label.setText(services[i]);
@@ -321,6 +316,8 @@ public class GUI extends javax.swing.JFrame {
                                 regionChanged = false;
                             }
                             
+                            setFormIcon();
+                            
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         } catch (InterruptedException ex) {
@@ -331,7 +328,8 @@ public class GUI extends javax.swing.JFrame {
                             // Refresh server status, default is 10 seconds
                             Thread.sleep(getPollingRate() * 1000);
                             turnAllIncidentButtonsOff();
-                            
+                            setFormIcon();
+                                                    
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
                             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
@@ -520,6 +518,12 @@ public class GUI extends javax.swing.JFrame {
                 return formatted;
             }
             
+            /**
+             * Converts an incident's updated time to a more readable form.
+             * 
+             * @param raw The raw updated time as received from the API.
+             * @return A more readable timestamp.
+             */
             private String formatTime(String raw) {
                 String date = raw.substring(0, raw.indexOf("T"));
                 String time = raw.substring(raw.indexOf("T") + 1, raw.indexOf(".")) + " GMT";
@@ -558,6 +562,74 @@ public class GUI extends javax.swing.JFrame {
         pollThread.start();
     }
     
+    private void setFormIcon() {
+        ImageIcon img;
+        
+        if(!jToggleButton1.isSelected()) {
+            // Grey Icon - IDLE
+            img = new ImageIcon(root + "iconIDLE.png");
+        }
+        else if(checkAllOnline() && jToggleButton1.isSelected()){
+            if(checkForAnIncident()) {
+                // Yellow Icon - INCDENTS EXIST
+                img = new ImageIcon(root + "iconINCIDENT.png");
+                this.setIconImage(img.getImage());
+            }
+            else {
+                // Green Icon - ALL SERVICES ONLINE, NO INCIDENTS
+                img = new ImageIcon(root + "iconONLINE.png");
+                this.setIconImage(img.getImage());
+            }
+        }
+        else{
+            // Red Icon - AT LEAST ONE SERVICE OFFLINE
+            img = new ImageIcon(root + "iconONLINE.png");
+        }
+        
+        this.setIconImage(img.getImage());
+    }
+    
+    private String[] getCurrentServiceNames(){
+        String[] services;
+        // NA and OCE use "Boards" service
+        if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
+            services = sdata.getServicesB();
+        }
+        // All others use "Forums" service
+        else{
+            services = sdata.getServicesF();
+        }
+
+        return services;
+    }
+    
+    /**
+     * Checks to see if all services are online.
+     * 
+     * @return False if one at least one service is offline. 
+     */
+    private boolean checkAllOnline() {
+        for(JLabel label : statusLabels) {
+            if(label.toString().equals("Offline")){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Checks to see if all services are online.
+     * 
+     * @return True if there is at least one incident. 
+     */
+    private boolean checkForAnIncident() {
+        if(!allIncidents.isEmpty()) {
+            return true;
+        }
+        
+        return false;
+    }
+            
     /**
      * Reset the server status labels to black when the program is not checking
      * status.

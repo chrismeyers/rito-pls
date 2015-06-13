@@ -13,7 +13,7 @@ checks.
 
 1. ~~Add a menu to quit, display Riot's legal statement and change polling increment.~~
 2. ~~Add a pop-up to display the individual incidents for each service experiencing trouble.~~
-3. ~~Add Title to window~~ and a custom icon.
+3. ~~Add Title to window~~ ~~and a custom icon.~~
 4. ~~General cleanup and formatting of GUI.~~
 5. ~~Format incident time.~~
 
