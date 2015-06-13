@@ -4,7 +4,7 @@ for a specified region.  The application queries the League of Legends API perio
 of several services (Boards, Game, Store and Website).
 
 The purpose of this project is to get more practice with Java GUI building and multithreaded programming.  The polling
-operation takes place on a new thread that allows for the program to function normally while maintaining a periodic server
+operation takes place on a new thread that allows for the program to function normally while maintaining periodic server
 checks.
 
 ![Application reporting statuses](http://i.imgur.com/Z0LGytV.png)
