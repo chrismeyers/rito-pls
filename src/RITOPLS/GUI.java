@@ -385,7 +385,7 @@ public class GUI extends javax.swing.JFrame {
                             content = incidents.get(serviceString);
                             
                             severity = content.get("severity");
-                            updatedTime = content.get("updated_at");
+                            updatedTime = formatTime(content.get("updated_at"));
                             contentString = content.get("content");
                             
                             incidentStrings.add("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
@@ -513,6 +513,15 @@ public class GUI extends javax.swing.JFrame {
                 // Remove brackets
                 String formatted = raw.replaceAll("[\\[\\]]", "");
 
+                return formatted;
+            }
+            
+            private String formatTime(String raw) {
+                String date = raw.substring(0, raw.indexOf("T"));
+                String time = raw.substring(raw.indexOf("T") + 1, raw.indexOf(".")) + " GMT";
+                
+                String formatted = date + " @ " + time; 
+                
                 return formatted;
             }
             
