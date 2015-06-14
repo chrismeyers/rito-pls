@@ -36,6 +36,7 @@ public class GUI extends javax.swing.JFrame {
     private final JButton[] incidentButtons;
     private final HashMap<String, ArrayList<String>> allIncidents;
     private boolean regionChanged;
+    Thread pollThread, counterThread;
     
     /**
      * Creates new form GUI
@@ -70,6 +71,8 @@ public class GUI extends javax.swing.JFrame {
                 
                 // Update labels in case naming convention in current region changed.
                 populateServicesLabels();
+                
+                interruptThreads();
                     
                 // Keeps jToggleButton1's text from incorrectly changing to 
                 //"Checking..."when the region is changed and jToggleButton is disabled.
@@ -86,6 +89,9 @@ public class GUI extends javax.swing.JFrame {
                 if(jToggleButton1.isSelected()){
                     setTextWhenOn();
                 }
+                else{
+                    interruptThreads();
+                }
             }        
         });  
     }
@@ -97,6 +103,11 @@ public class GUI extends javax.swing.JFrame {
      */
     private void populateRegionComboBox(String[] regions) {
         jComboBox1.setModel(new DefaultComboBoxModel(regions));
+    }
+    
+    private void interruptThreads() {
+        pollThread.interrupt();
+        counterThread.interrupt();
     }
     
     /**
@@ -332,7 +343,10 @@ public class GUI extends javax.swing.JFrame {
                                                     
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
+                            //Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
+                            System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
+                            setTextWhenOff();
+                            setFormIcon();
                         }
                     }
                 }
@@ -471,38 +485,33 @@ public class GUI extends javax.swing.JFrame {
              * Sets the value of the polling info label (jLabel9) based on the 
              * current polling rate.
              */
-            private synchronized void setPollingInfoLabel() throws InterruptedException {
+            private void setPollingInfoLabel() throws InterruptedException {
                 Runnable countdown = new Runnable() {
                     @Override
                     public void run() {
-                        for(int i = getPollingRate(); i > -1; --i) {
-                            if(i == 1) {
-                                jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " second...");
-                            }
-                            else {
-                                jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " seconds...");
-                            }
-                            jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
+                        for(int i = getPollingRate(); i > -1; i--) {
+                            if(jToggleButton1.isSelected()){
+                                if(i == 1) {
+                                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " second...");
+                                }
+                                else {
+                                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " seconds...");
+                                }
+                                jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
 
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException ex) {
-                                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException ex) {
+                                    System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
+                                    break;
+                                }
                             }
-                            
-                            if(!jToggleButton1.isSelected()){
-                                jToggleButton1.setText("Stopping in " + (i - 1) + "s" );
-                            }
-                        }
-                        
-                        if(!jToggleButton1.isSelected()) {
-                            setTextWhenOff();
                         }
                     }
                 };
                 
-                Thread counter = new Thread(countdown);
-                counter.start();
+                counterThread = new Thread(countdown, "Counter Thread");
+                counterThread.start();
             }
             
             /**
@@ -558,7 +567,7 @@ public class GUI extends javax.swing.JFrame {
             }
         };
 
-        Thread pollThread = new Thread(poll);
+        pollThread = new Thread(poll, "Poll Thread");
         pollThread.start();
     }
     
