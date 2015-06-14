@@ -22,13 +22,12 @@ checks.
 ### Get the program running
 1. Clone this git repository or download as .zip.
 2. Choose a .jar file to run:
-  * dist/rito-pls.jar can be used as long as the .jar is always run in the dist directory and the dist directory remains unchanged.
-  * A more portable standalone version of the .jar can be found in store/rito-pls.jar.  This method is preferred because all
-    external resources and libraries are packaged into one file.
-4. Run the selected .jar:
-  * Double click the selected .jar to run.
+  * `dist/rito-pls.jar` can be used as long as the .jar is always run in the dist directory and the dist directory remains unchanged.
+  * A more portable standalone version of the .jar can be found in `store/rito-pls.jar`.  This method is preferred because all external resources and libraries are packaged into one file.
+4. Run the selected .jar by either:
+  * Double clicking the selected .jar file.
     * If double clicking doesn't work, the following program works well to fix the .jar file association:       http://johann.loefflmann.net/en/software/jarfix/index.html
-  * Run the following command from the command line:
+  * Running the following command from the command line:
     * `java -jar "X:/PATH/TO/JAR/rito-pls.jar"`
 
 ### Using the program
