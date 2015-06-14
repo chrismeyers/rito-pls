@@ -17,6 +17,30 @@ checks.
 4. ~~General cleanup and formatting of GUI.~~
 5. ~~Format incident time.~~
 
+## Usage
+
+### Get the program running
+1. Clone this git repository or download as .zip.
+2. Choose a .jar file to run:
+  * dist/rito-pls.jar can be used as long as the .jar is always run in the dist directory and the dist directory remains unchanged.
+  * A more portable standalone version of the .jar can be found in store/rito-pls.jar.  This method is preferred because all
+    external resources and libraries are packaged into one file.
+4. Run the selected .jar:
+  * Double click the selected .jar to run.
+    * If double clicking doesn't work, the following program works well to fix the .jar file association:       http://johann.loefflmann.net/en/software/jarfix/index.html
+  * Run the following command from the command line:
+    * `java -jar "X:/PATH/TO/JAR/rito-pls.jar"`
+
+### Using the program
+1. (Optional) Select a polling rate from `File > Set Polling Rate`.
+  * This determines how often the program queries the servers.
+  * Default is 5 seconds.
+2. Select a region from the dropdown menu.
+3. Press "Click to Check" button to begin querying.
+4. If incidents exist, click the button next to the status to see the related incident(s).
+5. Click the "Checking..." button to stop querying the server.
+
+
 ##Legal
 
 riot-pls isn’t endorsed by Riot Games and doesn’t reflect the views or opinions of Riot Games or
