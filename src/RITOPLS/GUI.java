@@ -1,6 +1,7 @@
 package RITOPLS;
 
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -9,13 +10,13 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
-import javax.swing.ImageIcon;
 
 /**
  * This class provides a GUI interface that reflects the status of League of Legends 
@@ -543,30 +544,28 @@ public class GUI extends javax.swing.JFrame {
     }
     
     private void setFormIcon() {
-        ImageIcon img;
+        Image img;
         
         if(!jToggleButton1.isSelected()) {
             // Grey Icon - IDLE
-            img = new ImageIcon(root + "iconIDLE.png");
+            img = resources.ResourceLoader.getImage("iconIDLE.png");
         }
         else if(checkAllOnline() && jToggleButton1.isSelected()){
             if(checkForAnIncident()) {
                 // Yellow Icon - INCDENTS EXIST
-                img = new ImageIcon(root + "iconINCIDENT.png");
-                this.setIconImage(img.getImage());
+                img = resources.ResourceLoader.getImage("iconINCIDENT.png");
             }
             else {
                 // Green Icon - ALL SERVICES ONLINE, NO INCIDENTS
-                img = new ImageIcon(root + "iconONLINE.png");
-                this.setIconImage(img.getImage());
+                img = resources.ResourceLoader.getImage("iconONLINE.png");
             }
         }
         else{
             // Red Icon - AT LEAST ONE SERVICE OFFLINE
-            img = new ImageIcon(root + "iconONLINE.png");
+            img = resources.ResourceLoader.getImage("iconOFFLINE.png");
         }
         
-        this.setIconImage(img.getImage());
+        this.setIconImage(img);
     }
     
     /**
