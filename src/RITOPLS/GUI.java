@@ -312,16 +312,12 @@ public class GUI extends javax.swing.JFrame {
                 synchronized(p) {
                     //int i = 0;
                     HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
-                    HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues = new HashMap();
-                    ArrayList<HashMap<String, HashMap<String, String>>> services = new ArrayList<HashMap<String, HashMap<String, String>>>();
-                    HashMap<String, HashMap<String, String>> incidents = new HashMap();
-                    HashMap<String, String> content = new HashMap();
                     
                     while(jToggleButton1.isSelected()){
                         try {
                             // Set current status for each service.
                             statusInfo = p.getStatus(getCurrentRegion());
-                            setStatusStrings(statusInfo, statusValues, services, incidents, content);
+                            setStatusStrings(statusInfo);
                             if(regionChanged) {
                                 jTextArea1.setText(setNewTextAreaMessage());
                                 regionChanged = false;
@@ -356,53 +352,30 @@ public class GUI extends javax.swing.JFrame {
              * Set status strings on GUI and handles incidents.
              * 
              * @param statusInfo All parsed information.
-             * @param statusValues Contains service statuses.
-             * @param services Contains data for all services.
-             * @param incidents Contains the incidents.
-             * @param content Contains severity, updatedTime and contentString.
              */
-            private void setStatusStrings(
-                    HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo,
-                    HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>> statusValues,
-                    ArrayList<HashMap<String, HashMap<String, String>>> services,
-                    HashMap<String, HashMap<String, String>> incidents,
-                    HashMap<String, String> content) throws InterruptedException {
+            private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
+                                                    throws InterruptedException {
                 
-                String serviceString, severity, updatedTime, contentString = "";
-                ArrayList<String> incidentStrings = new ArrayList<String>();
-                
+                String serviceString, status, severity, updatedTime, contentString = "";
+                ArrayList<String> incidentStrings = new ArrayList<String>();             
                 
                 // Set polling rate info label
                 setPollingInfoLabel();
                 
+                // Set status labels, color these labels and handle incidents.
                 for(int service = 0; service < statusLabels.length; service++) {
-                    if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
-                        // NA and OCE use "Boards" service.
-                        serviceString = sdata.getServiceB(service);
-                        statusValues = statusInfo.get(serviceString);
-                    }
-                    else {
-                        // All other regions use "Forums" service.
-                        serviceString = sdata.getServiceF(service);
-                        statusValues = statusInfo.get(serviceString);
-                    }
-                    String status = statusValues.keySet().toString();
+                    serviceString = getCurrentServiceName(service);
+                    status = statusInfo.get(serviceString).keySet().toString();
                 
                     statusLabels[service].setText(formatOutput(status));
-                    
                     colorize(statusLabels[service]);
                     
                     // Handle incidents.
-                    services = statusValues.get(formatOutput(status));
-                    
-                    if(!services.isEmpty()) {
-                        for (HashMap<String, HashMap<String, String>> currentService : services) {
-                            incidents = currentService;
-                            content = incidents.get(serviceString);
-                            
-                            severity = content.get("severity");
-                            updatedTime = formatTime(content.get("updated_at"));
-                            contentString = content.get("content");
+                    if(!statusInfo.get(serviceString).get(formatOutput(status)).isEmpty()) {
+                        for (int i = 0; i < statusInfo.get(serviceString).get(formatOutput(status)).size(); i++) {
+                            severity = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("severity");
+                            updatedTime = formatTime(statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("updated_at"));
+                            contentString = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("content");
                             
                             incidentStrings.add("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
                             
@@ -412,8 +385,6 @@ public class GUI extends javax.swing.JFrame {
                             System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
                         }
                     }
-                    
-                    services.clear();
                 }
             }  
             
@@ -598,6 +569,11 @@ public class GUI extends javax.swing.JFrame {
         this.setIconImage(img.getImage());
     }
     
+    /**
+     * Gets the correct array of services.
+     * 
+     * @return An array of service names. 
+     */
     private String[] getCurrentServiceNames(){
         String[] services;
         // NA and OCE use "Boards" service
@@ -610,6 +586,26 @@ public class GUI extends javax.swing.JFrame {
         }
 
         return services;
+    }
+    
+    /**
+     * Gets a service string from the correct array of services.
+     * 
+     * @param serv The service index
+     * @return The correct service string.
+     */
+    private String getCurrentServiceName(int serv){
+        String service;
+        // NA and OCE use "Boards" service
+        if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
+            service = sdata.getServiceB(serv);
+        }
+        // All others use "Forums" service
+        else{
+            service = sdata.getServiceF(serv);
+        }
+
+        return service;
     }
     
     /**
