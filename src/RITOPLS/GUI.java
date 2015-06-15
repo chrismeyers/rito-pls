@@ -71,12 +71,15 @@ public class GUI extends javax.swing.JFrame {
                 
                 // Update labels in case naming convention in current region changed.
                 populateServicesLabels();
+                
+                // Clean array for new region.
+                allIncidents.clear();
 
                 // Keeps jToggleButton1's text from incorrectly changing to 
                 //"Checking..."when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
-                    interruptThreads();
+                    interruptThreads(); 
                 }
             }        
         });
@@ -85,6 +88,8 @@ public class GUI extends javax.swing.JFrame {
         jToggleButton1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Clean array for new region.
+                allIncidents.clear();
                 if(jToggleButton1.isSelected()){
                     setTextWhenOn();
                 }
@@ -355,8 +360,9 @@ public class GUI extends javax.swing.JFrame {
             private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
                                                     throws InterruptedException {
                 
-                String serviceString, status, severity, updatedTime, contentString = "";
-                ArrayList<String> incidentStrings = new ArrayList<String>();             
+                String incidentString, serviceString, status, severity, updatedTime, contentString = "";
+                ArrayList<String> currentServiceArrList;// = new ArrayList<String>();
+                           
                 
                 // Set polling rate info label
                 setPollingInfoLabel();
@@ -375,11 +381,19 @@ public class GUI extends javax.swing.JFrame {
                             severity = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("severity");
                             updatedTime = formatTime(statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("updated_at"));
                             contentString = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("content");
+    
+                            incidentString = "[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString;
                             
-                            incidentStrings.add("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
+                            if(allIncidents.get(serviceString) == null) {
+                                currentServiceArrList = new ArrayList<String>();
+                            }
+                            else {
+                                currentServiceArrList = allIncidents.get(serviceString);
+                            }
+                            currentServiceArrList.add(incidentString);
+                            allIncidents.put(serviceString, currentServiceArrList);
                             
                             populateIncidentButton(service, serviceString, severity);
-                            allIncidents.put(serviceString, incidentStrings);
                             
                             System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
                         }
@@ -443,7 +457,9 @@ public class GUI extends javax.swing.JFrame {
                     public void actionPerformed(ActionEvent e) {
                         textarea.setText("");
                         for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
-                            textarea.append(allIncidents.get(currentService).get(i) + "\n\n");
+                            String currentInc = allIncidents.get(currentService).get(i) + "\n\n";
+                            textarea.append(currentInc);
+                            
                             // "Scroll" to top of jTextBox1
                             textarea.setCaretPosition(0);
                         }
