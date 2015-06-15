@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -72,13 +71,12 @@ public class GUI extends javax.swing.JFrame {
                 
                 // Update labels in case naming convention in current region changed.
                 populateServicesLabels();
-                
-                interruptThreads();
-                    
+
                 // Keeps jToggleButton1's text from incorrectly changing to 
                 //"Checking..."when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
+                    interruptThreads();
                 }
             }        
         });
