@@ -130,12 +130,10 @@ public class Parser {
                             content.put("updated_at", formatOutput(jobj.get("updated_at").toString()));
                             // Add content
                             content.put("content", formatOutput(jobj.get("content").toString()));
-
+                            
                             incidents.put(service, (HashMap)content.clone());
-                            content.clear();
+                            services.add((HashMap)incidents.clone());
                         }
-
-                        services.add((HashMap)incidents.clone());
                     }
                 }
             }
@@ -143,7 +141,6 @@ public class Parser {
             statusValues.put(status, (ArrayList)services.clone());
             services.clear(); // Make sure old incidents aren't copied if current service has no incidents.
             statusInfo.put(service, (HashMap)statusValues.clone());
-            statusValues.clear();
         }
         
         return statusInfo;
