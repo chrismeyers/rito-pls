@@ -74,12 +74,12 @@ public class GUI extends javax.swing.JFrame {
                 
                 // Clean array for new region.
                 allIncidents.clear();
-
+                
                 // Keeps jToggleButton1's text from incorrectly changing to 
                 //"Checking..."when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
-                    interruptThreads(); 
+                    interruptThreads();
                 }
             }        
         });
@@ -234,7 +234,7 @@ public class GUI extends javax.swing.JFrame {
      * Set server status labels when not checking the server status.
      */
     private void setTextWhenOff() {
-        jToggleButton1.setText("Click to check");
+        checkButtonTextOff();
         
         // Set default label values
         for (JLabel label : statusLabels) {
@@ -306,7 +306,7 @@ public class GUI extends javax.swing.JFrame {
      * Adjust values of server status labels when checking is enabled.
      */
     private void setTextWhenOn() {
-        jToggleButton1.setText("Checking...");
+        checkButtonTextOn();
         
         // Creates a second thread to periodically check for a change in server
         // status.
@@ -346,6 +346,9 @@ public class GUI extends javax.swing.JFrame {
                             //Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
                             System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
                             setTextWhenOff();
+                            if(jToggleButton1.isSelected()){
+                                checkButtonTextOn();
+                            }
                             setFormIcon();
                         }
                     }
@@ -647,7 +650,21 @@ public class GUI extends javax.swing.JFrame {
         
         return false;
     }
-            
+    
+    /**
+     * Set jToggleButton1's text when selected.
+     */
+    private void checkButtonTextOn() {
+        jToggleButton1.setText("Checking...");
+    }
+        
+    /**
+     * Set jToggleButton1's text when not selected.
+     */
+    private void checkButtonTextOff() {
+        jToggleButton1.setText("Click to check");
+    }
+    
     /**
      * Reset the server status labels to black when the program is not checking
      * status.
