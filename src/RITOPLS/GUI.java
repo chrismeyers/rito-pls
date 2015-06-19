@@ -393,7 +393,10 @@ public class GUI extends javax.swing.JFrame {
                             else {
                                 currentServiceArrList = allIncidents.get(serviceString);
                             }
-                            currentServiceArrList.add(incidentString);
+                            
+                            if(!currentServiceArrList.contains(incidentString)) {
+                                currentServiceArrList.add(incidentString);
+                            }
                             allIncidents.put(serviceString, currentServiceArrList);
                             
                             populateIncidentButton(service, serviceString, severity);
