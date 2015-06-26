@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 public class Parser {
     private String currentUrlData;
     private String baseUrl;
+    private boolean networkOK;
     
     /**
      * Constructor for the Parser class.
@@ -28,7 +30,14 @@ public class Parser {
     public Parser(String region) throws IOException {
         baseUrl = "http://status.leagueoflegends.com/shards/";
         String currentUrlString = buildUrl(region);
-        currentUrlData = getUrlData(currentUrlString);
+        try {
+            currentUrlData = getUrlData(currentUrlString);
+            networkOK = true;
+        }
+        catch(UnknownHostException e) {
+            currentUrlData = "";
+            networkOK = false;
+        }
     }
     
     /**
@@ -91,7 +100,20 @@ public class Parser {
      */
     public HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> 
                                         getStatus(String region) throws IOException {
-        JsonElement jelem = new JsonParser().parse(getUrlData(buildUrl(region)));
+        
+        String currentData;
+
+        try {
+            currentData = getUrlData(buildUrl(region));
+            networkOK = true;
+        }
+        catch(UnknownHostException e) {
+            currentData = "";
+            networkOK = false;
+            throw e;
+        }
+        
+        JsonElement jelem = new JsonParser().parse(currentData);
         JsonObject jobj = jelem.getAsJsonObject();
         JsonArray servicesArr = jobj.getAsJsonArray("services");
         JsonArray incidentsArr;
@@ -120,7 +142,7 @@ public class Parser {
                     updatesArr = jobj.getAsJsonArray("updates");
                     
                     // Get information for each update.
-                    if(updatesArr.size() > 0){
+                    if(updatesArr.size() > 0) {
                         for(int k = 0; k < updatesArr.size(); k++) {
                             jobj = updatesArr.get(k).getAsJsonObject();
 
@@ -160,5 +182,36 @@ public class Parser {
         formatted = formatted.substring(0,1).toUpperCase() + formatted.substring(1);
         
         return formatted;
+    }
+    
+    /**
+     * Performs a network check by attempting to connect to the API.
+     * 
+     * @param region The current region.
+     * @return  True if openStream() was successful, false otherwise.
+     * @throws IOException 
+     */
+    public boolean networkCheck(String region) throws IOException {
+        try {
+            //getUrlData(buildUrl(region));
+            URL statusUrlData = new URL(buildUrl(region));
+            statusUrlData.openStream();
+            networkOK = true;
+            return true;
+        }
+        catch(UnknownHostException e) {
+            networkOK = false;
+            return false;
+        }
+        
+    }
+    
+    /**
+     * Gets the status of your connection to the status servers.
+     * 
+     * @return True if a connection was made, false otherwise.
+     */
+    public boolean isNetworkUp() {
+        return networkOK;
     }
 }

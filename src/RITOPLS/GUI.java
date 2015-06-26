@@ -5,10 +5,9 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -24,13 +23,12 @@ import javax.swing.SwingConstants;
  * @author Chris Meyers
  */
 public class GUI extends javax.swing.JFrame {
-    private static final String root = System.getProperty("user.dir") + "/Resources/";
-    
     private String region;
     private final Parser p;
     private final StaticData sdata;
     private int pollingRate;
     private static final String POLLING_OFF_MSG = "N/A";
+    private static final int DEFAULT_POLLING_RATE = 10;
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
     private final JButton[] incidentButtons;
@@ -52,16 +50,16 @@ public class GUI extends javax.swing.JFrame {
         incidentButtons = new JButton[]{jButton1, jButton2, jButton3, jButton4};
         
         setupMenus();
-        setTextWhenOff(); // default state
-        setPollingRate(5); // 5 seconds by default
+        setPollingRate(DEFAULT_POLLING_RATE);
         populateRegionComboBox(sdata.getRegions());
         
         //Initialize region to first item in ComboBox (NA)
         region = jComboBox1.getSelectedItem().toString().toLowerCase();
         
         populateServicesLabels();
-  
+        
         p = new Parser(region);
+        setTextWhenOff(); // default state
         
         // Listen for changes in region combo box state.
         jComboBox1.addActionListener(new ActionListener() {
@@ -90,10 +88,18 @@ public class GUI extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 // Clean array for new region.
                 allIncidents.clear();
-                if(jToggleButton1.isSelected()){
-                    setTextWhenOn();
+                
+                if(jToggleButton1.isSelected()) {
+                    try {
+                        if(p.networkCheck(getCurrentRegion())) {
+                            setTextWhenOn();
+                        }
+                        else {
+                            networkErrorFound();
+                        }
+                    } catch (IOException ex) {}
                 }
-                else{
+                else {
                     interruptThreads();
                 }
             }        
@@ -109,6 +115,9 @@ public class GUI extends javax.swing.JFrame {
         jComboBox1.setModel(new DefaultComboBoxModel(regions));
     }
     
+    /**
+     * Interrupt all non-main threads.
+     */
     private void interruptThreads() {
         pollThread.interrupt();
         counterThread.interrupt();
@@ -134,14 +143,14 @@ public class GUI extends javax.swing.JFrame {
                 int rate = 0;
                 
                 intervals.add("1");
-                for(int invl = 5; invl <= 60;invl+=5) {
+                for(int invl = 5; invl <= 60; invl+=5) {
                     intervals.add(invl +  "");
                     
-                    if(invl % 20 == 0){
+                    if(invl % 20 == 0) {
                         invl += 10;
                     }
                                         
-                    if(invl % 10 == 0){
+                    if(invl % 10 == 0) {
                         invl += 5;
                     }
                 }
@@ -201,7 +210,6 @@ public class GUI extends javax.swing.JFrame {
     
     /**
      * Populates jLabel1-4 with the available services.
-     * 
      */
     private void populateServicesLabels() {
         String[] services = getCurrentServiceNames();
@@ -233,7 +241,14 @@ public class GUI extends javax.swing.JFrame {
     /**
      * Set server status labels when not checking the server status.
      */
-    private void setTextWhenOff() {
+    private void setTextWhenOff() throws IOException {
+        if(p.networkCheck(getCurrentRegion())) {
+            jTextArea1.setText(setNewTextAreaMessage());
+        }
+        else {
+            networkErrorFound();
+        }
+        
         checkButtonTextOff();
         
         // Set default label values
@@ -252,7 +267,8 @@ public class GUI extends javax.swing.JFrame {
         jTextArea1.setEditable(false);
         jTextArea1.setLineWrap(true);
         jTextArea1.setWrapStyleWord(true);
-        jTextArea1.setText(setNewTextAreaMessage());
+
+
         
     }
     
@@ -274,8 +290,10 @@ public class GUI extends javax.swing.JFrame {
      * @return A string to be used to populate the default jTextArea1.
      */
     private String setNewTextAreaMessage() {
+        jTextArea1.setForeground(Color.black);
+        
         for (JButton button : incidentButtons) {
-            if(button.isEnabled()) {
+            if(button.isEnabled() && jToggleButton1.isSelected()) {
                 return "Incidents available for review.";
             }       
         }
@@ -285,7 +303,6 @@ public class GUI extends javax.swing.JFrame {
     
     /**
      * Sets the rate at which the program queries the API.
-     * Default is every 10 seconds.
      * 
      * @param rate The rate of checking servers (in seconds)
      */
@@ -314,14 +331,22 @@ public class GUI extends javax.swing.JFrame {
             @Override
             public void run() {
                 synchronized(p) {
-                    //int i = 0;
                     HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
                     
-                    while(jToggleButton1.isSelected()){
+                    while(jToggleButton1.isSelected()) {
                         try {
                             // Set current status for each service.
-                            statusInfo = p.getStatus(getCurrentRegion());
+                            try {
+                                statusInfo = p.getStatus(getCurrentRegion());
+                            }
+                            catch(UnknownHostException e) {
+                                setTextWhenOff();
+                                break;
+                            }
+                            
                             setStatusStrings(statusInfo);
+                            
+                            
                             if(regionChanged) {
                                 jTextArea1.setText(setNewTextAreaMessage());
                                 regionChanged = false;
@@ -329,24 +354,23 @@ public class GUI extends javax.swing.JFrame {
                             
                             setFormIcon();
                             
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+                        } 
+                        catch (IOException ex) {} 
+                        catch (InterruptedException ex) {}
 
                         try {
-                            // Refresh server status, default is 10 seconds
                             Thread.sleep(getPollingRate() * 1000);
                             turnAllIncidentButtonsOff();
-                            setFormIcon();
                                                     
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
                             //Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
                             System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
-                            setTextWhenOff();
-                            if(jToggleButton1.isSelected()){
+                            try {
+                                setTextWhenOff();
+                            } catch (IOException ex) {}
+                            
+                            if(jToggleButton1.isSelected()) {
                                 checkButtonTextOn();
                             }
                             setFormIcon();
@@ -364,7 +388,7 @@ public class GUI extends javax.swing.JFrame {
                                                     throws InterruptedException {
                 
                 String incidentString, serviceString, status, severity, updatedTime, contentString = "";
-                ArrayList<String> currentServiceArrList;// = new ArrayList<String>();
+                ArrayList<String> currentServiceArrList;
                            
                 
                 // Set polling rate info label
@@ -461,6 +485,7 @@ public class GUI extends javax.swing.JFrame {
                 button.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
+                        textarea.setForeground(Color.black);
                         textarea.setText("");
                         for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
                             String currentInc = allIncidents.get(currentService).get(i) + "\n\n";
@@ -482,7 +507,7 @@ public class GUI extends javax.swing.JFrame {
                     @Override
                     public void run() {
                         for(int i = getPollingRate(); i > -1; i--) {
-                            if(jToggleButton1.isSelected()){
+                            if(jToggleButton1.isSelected()) {
                                 if(i == 1) {
                                     jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " second...");
                                 }
@@ -529,9 +554,7 @@ public class GUI extends javax.swing.JFrame {
                 String date = raw.substring(0, raw.indexOf("T"));
                 String time = raw.substring(raw.indexOf("T") + 1, raw.indexOf(".")) + " GMT";
                 
-                String formatted = date + " @ " + time; 
-                
-                return formatted;
+                return date + " @ " + time; 
             }
             
             /**
@@ -570,7 +593,7 @@ public class GUI extends javax.swing.JFrame {
             // Grey Icon - IDLE
             img = resources.ResourceLoader.getImage("iconIDLE.png");
         }
-        else if(checkAllOnline() && jToggleButton1.isSelected()){
+        else if(checkAllOnline() && jToggleButton1.isSelected()) {
             if(checkForAnIncident()) {
                 // Yellow Icon - INCDENTS EXIST
                 img = resources.ResourceLoader.getImage("iconINCIDENT.png");
@@ -580,7 +603,7 @@ public class GUI extends javax.swing.JFrame {
                 img = resources.ResourceLoader.getImage("iconONLINE.png");
             }
         }
-        else{
+        else {
             // Red Icon - AT LEAST ONE SERVICE OFFLINE
             img = resources.ResourceLoader.getImage("iconOFFLINE.png");
         }
@@ -593,14 +616,14 @@ public class GUI extends javax.swing.JFrame {
      * 
      * @return An array of service names. 
      */
-    private String[] getCurrentServiceNames(){
+    private String[] getCurrentServiceNames() {
         String[] services;
         // NA and OCE use "Boards" service
         if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
             services = sdata.getServicesB();
         }
         // All others use "Forums" service
-        else{
+        else {
             services = sdata.getServicesF();
         }
 
@@ -613,14 +636,14 @@ public class GUI extends javax.swing.JFrame {
      * @param serv The service index
      * @return The correct service string.
      */
-    private String getCurrentServiceName(int serv){
+    private String getCurrentServiceName(int serv) {
         String service;
         // NA and OCE use "Boards" service
         if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
             service = sdata.getServiceB(serv);
         }
         // All others use "Forums" service
-        else{
+        else {
             service = sdata.getServiceF(serv);
         }
 
@@ -634,7 +657,7 @@ public class GUI extends javax.swing.JFrame {
      */
     private boolean checkAllOnline() {
         for(JLabel label : statusLabels) {
-            if(label.toString().equals("Offline")){
+            if(label.toString().equals("Offline")) {
                 return false;
             }
         }
@@ -676,6 +699,23 @@ public class GUI extends javax.swing.JFrame {
         if(label.getText().equals(POLLING_OFF_MSG)){
             label.setForeground(Color.black);
         }
+    }
+    
+    /**
+     * Displays message box if there is a network error.
+     */
+    private void networkErrorFound() {
+        jToggleButton1.setSelected(false);
+        
+        String error = "A connection to the server was unable to be made.\n\n"
+           + "Either Riot's API servers are unresponsive or your network is "
+           + "experiencing issues.  Please check your connection and try "
+           + "again.";
+
+        //JOptionPane.showMessageDialog(new JFrame(), 
+        //    error , "Network Error", JOptionPane.ERROR_MESSAGE);
+        jTextArea1.setForeground(Color.red);
+        jTextArea1.setText(error);
     }
     
     /**
