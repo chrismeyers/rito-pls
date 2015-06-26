@@ -1,13 +1,9 @@
 # rito-pls
-rito-pls is a Java application currently under development that reports the current League of Legends service statuses 
-for a specified region.  The application queries the League of Legends API periodically and presents the current status
-of several services (Boards, Game, Store and Website).
+rito-pls is a Java application that reports current *League of Legends* service statuses for a specified region.  The application queries the *League of Legends* API periodically and presents the current status of several services (Boards/Forums, Game, Store and Website).
 
-The purpose of this project is to get more practice with Java GUI building and multithreaded programming.  The polling
-operation takes place on a new thread that allows for the program to function normally while maintaining periodic server
-checks.
+The purpose of this project was to get more practice with Java GUI building and multithreaded programming.  The polling operation takes place on a new thread that allows for the program to function normally while maintaining periodic server checks.
 
-![Application reporting statuses](http://i.imgur.com/kdXiIhb.png)
+![Current GUI](http://i.imgur.com/kdXiIhb.png)
 
 ## TODO
 
