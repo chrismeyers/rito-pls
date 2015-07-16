@@ -88,9 +88,6 @@ public class GUI extends javax.swing.JFrame {
         jToggleButton1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Clean array for new region.
-                allIncidents.clear();
-                
                 if(jToggleButton1.isSelected()) {
                     try {
                         if(p.networkCheck(getCurrentRegion())) {
@@ -295,11 +292,9 @@ public class GUI extends javax.swing.JFrame {
     private String setNewTextAreaMessage() {
         jTextArea1.setForeground(Color.black);
 
-        for (JButton button : incidentButtons) {
-            if(jToggleButton1.isSelected() && button.isEnabled()) {
-                return INCIDENTS_AVAILABLE;
-            }       
-        }
+        if(jToggleButton1.isSelected() && !allIncidents.isEmpty()) {
+            return INCIDENTS_AVAILABLE;
+        }       
         
         return NO_INCIDENTS_AVAILABLE;
     }
