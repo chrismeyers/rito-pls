@@ -34,7 +34,7 @@ public class GUI extends javax.swing.JFrame {
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
     private final JButton[] incidentButtons;
-    private final HashMap<String, ArrayList<String>> allIncidents;
+    private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     private boolean regionChanged;
     Thread pollThread, counterThread;
     
@@ -384,8 +384,10 @@ public class GUI extends javax.swing.JFrame {
             private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
                                                     throws InterruptedException {
                 
-                String incidentString, serviceString, status, severity, updatedTime, contentString = "";
-                ArrayList<String> currentServiceArrList;
+                String incidentString, serviceString, status, severity, updatedTime, contentString, area = "";
+                ArrayList<HashMap<String, String>> currentServiceIncList;
+                HashMap<String, String> currentInc = new HashMap();
+                boolean incidentFound;
                            
                 
                 // Set polling rate info label
@@ -402,12 +404,12 @@ public class GUI extends javax.swing.JFrame {
                     // Handle incidents.
                     if(!statusInfo.get(serviceString).get(formatOutput(status)).isEmpty()) {
                         for (int i = 0; i < statusInfo.get(serviceString).get(formatOutput(status)).size(); i++) {
+                            incidentFound = false;
                             severity = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("severity");
                             updatedTime = formatTime(statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("updated_at"));
                             contentString = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("content");
-    
-                            incidentString = "[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString;
-                            
+                            area = "[" +getCurrentRegion().toUpperCase() + " " + serviceString + "]";
+
                             /*
                              * If the incident list doesn't have an entry for the
                              * current service, make a new ArrayList and add the
@@ -416,35 +418,45 @@ public class GUI extends javax.swing.JFrame {
                              * it.  Add the ArrayList to the incident HashMap.
                              */
                             if(allIncidents.get(serviceString) == null) {
-                                currentServiceArrList = new ArrayList<String>();
+                                currentServiceIncList = new ArrayList<HashMap<String, String>>();
                             }
                             else {
-                                currentServiceArrList = allIncidents.get(serviceString);
+                                currentServiceIncList = allIncidents.get(serviceString);
+                                
+                                for (HashMap<String, String> c : allIncidents.get(serviceString)) {
+                                    if(c.get("contentString").equals(contentString)) {
+                                        incidentFound = true;
+                                    }
+                                }
                             }
                             
-                            if(!currentServiceArrList.contains(incidentString)) {
-                                currentServiceArrList.add(incidentString);
+                            if(!incidentFound) {
+                                currentInc.put("area", area);
+                                currentInc.put("severity", severity);
+                                currentInc.put("updatedTime", updatedTime);
+                                currentInc.put("contentString", contentString);
+                            
+                                currentServiceIncList.add((HashMap)currentInc.clone());
+                                currentInc.clear();
+                                allIncidents.put(serviceString, currentServiceIncList);
                             }
-                            allIncidents.put(serviceString, currentServiceArrList);
                             
-                            populateIncidentButton(service, serviceString, severity);
+                            populateIncidentButton(service, severity);
+                            populateIncidentBox(service, serviceString);
                             
-                            System.out.println("[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString);
+                            System.out.println(area + " :: " + severity + " :: "+ updatedTime + " :: " + contentString);
                         }
                     }
                 }
             }  
             
             /**
-             * Updates incident buttons based on severity and provides a pop-up
-             * box containing the incident(s).
+             * Updates incident buttons based on severity.
              * 
              * @param service The current service that has an incident.
              * @param severity The severity of the current incident.
-             * @param time The last updated time of the incident.
-             * @param content What the incident is.
              */
-            private void populateIncidentButton(int service, String serviceString, String severity) {
+            private void populateIncidentButton(int service, String severity) {
                 
                 final JButton button = incidentButtons[service];
                 button.setEnabled(true);
@@ -482,7 +494,18 @@ public class GUI extends javax.swing.JFrame {
                         button.setText("?");
                         break;
                 }
-
+            }
+            
+            /**
+             * Updates the incident output box (jTextArea1).
+             * 
+             * @param service The current service that has an incident.
+             * @param serviceString A string of the incident.
+             */
+            private void populateIncidentBox(int service, String serviceString) {
+                final JButton button = incidentButtons[service];
+                button.setEnabled(true);
+                
                 final String currentService = serviceString;
                 final JTextArea textarea = jTextArea1;
                 
@@ -492,8 +515,10 @@ public class GUI extends javax.swing.JFrame {
                         textarea.setForeground(Color.black);
                         textarea.setText("");
                         for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
-                            String currentInc = allIncidents.get(currentService).get(i) + "\n\n";
-                            textarea.append(currentInc);
+                            textarea.append(allIncidents.get(currentService).get(i).get("area") + " :: ");
+                            textarea.append(allIncidents.get(currentService).get(i).get("severity") + " :: ");
+                            textarea.append(allIncidents.get(currentService).get(i).get("updatedTime") + " :: ");
+                            textarea.append(allIncidents.get(currentService).get(i).get("contentString") + "\n\n");
                             
                             // "Scroll" to top of jTextBox1
                             textarea.setCaretPosition(0);
