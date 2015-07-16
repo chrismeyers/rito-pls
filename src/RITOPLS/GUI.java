@@ -28,6 +28,8 @@ public class GUI extends javax.swing.JFrame {
     private final StaticData sdata;
     private int pollingRate;
     private static final String POLLING_OFF_MSG = "N/A";
+    private static final String INCIDENTS_AVAILABLE = "Incidents available for review.";
+    private static final String NO_INCIDENTS_AVAILABLE = "No incidents to report!";
     private static final int DEFAULT_POLLING_RATE = 10;
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
@@ -93,6 +95,7 @@ public class GUI extends javax.swing.JFrame {
                     try {
                         if(p.networkCheck(getCurrentRegion())) {
                             setTextWhenOn();
+                            jTextArea1.setText(setNewTextAreaMessage());
                         }
                         else {
                             networkErrorFound();
@@ -291,14 +294,14 @@ public class GUI extends javax.swing.JFrame {
      */
     private String setNewTextAreaMessage() {
         jTextArea1.setForeground(Color.black);
-        
+
         for (JButton button : incidentButtons) {
-            if(button.isEnabled() && jToggleButton1.isSelected()) {
-                return "Incidents available for review.";
+            if(jToggleButton1.isSelected() && button.isEnabled()) {
+                return INCIDENTS_AVAILABLE;
             }       
         }
         
-        return "No incidents to report!";
+        return NO_INCIDENTS_AVAILABLE;
     }
     
     /**
@@ -332,7 +335,7 @@ public class GUI extends javax.swing.JFrame {
             public void run() {
                 synchronized(p) {
                     HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
-                    
+
                     while(jToggleButton1.isSelected()) {
                         try {
                             // Set current status for each service.
@@ -346,9 +349,8 @@ public class GUI extends javax.swing.JFrame {
                             
                             setStatusStrings(statusInfo);
                             
-                            jTextArea1.setText(setNewTextAreaMessage());
-                            
                             if(regionChanged) {
+                                jTextArea1.setText(setNewTextAreaMessage());
                                 regionChanged = false;
                             }
                             
@@ -411,6 +413,13 @@ public class GUI extends javax.swing.JFrame {
     
                             incidentString = "[" +getCurrentRegion().toUpperCase() + " " + serviceString + "] :: " + severity + " :: " + updatedTime + " :: " + contentString;
                             
+                            /*
+                             * If the incident list doesn't have an entry for the
+                             * current service, make a new ArrayList and add the
+                             * incident to that.  Otherwise, use the ArrayList
+                             * that already exists and append the new incident to
+                             * it.  Add the ArrayList to the incident HashMap.
+                             */
                             if(allIncidents.get(serviceString) == null) {
                                 currentServiceArrList = new ArrayList<String>();
                             }
