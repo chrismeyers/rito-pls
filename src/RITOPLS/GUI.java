@@ -346,9 +346,9 @@ public class GUI extends javax.swing.JFrame {
                             
                             setStatusStrings(statusInfo);
                             
+                            jTextArea1.setText(setNewTextAreaMessage());
                             
                             if(regionChanged) {
-                                jTextArea1.setText(setNewTextAreaMessage());
                                 regionChanged = false;
                             }
                             
