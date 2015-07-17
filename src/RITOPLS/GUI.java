@@ -518,7 +518,11 @@ public class GUI extends javax.swing.JFrame {
                             textarea.append(allIncidents.get(currentService).get(i).get("area") + " :: ");
                             textarea.append(allIncidents.get(currentService).get(i).get("severity") + " :: ");
                             textarea.append(allIncidents.get(currentService).get(i).get("updatedTime") + " :: ");
-                            textarea.append(allIncidents.get(currentService).get(i).get("contentString") + "\n\n");
+                            textarea.append(allIncidents.get(currentService).get(i).get("contentString"));
+                            
+                            if(i != allIncidents.get(currentService).size()-1) {
+                                textarea.append("\n\n");
+                            }
                             
                             // "Scroll" to top of jTextBox1
                             textarea.setCaretPosition(0);
