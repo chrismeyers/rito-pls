@@ -30,6 +30,7 @@ public class GUI extends javax.swing.JFrame {
     private static final String POLLING_OFF_MSG = "N/A";
     private static final String INCIDENTS_AVAILABLE = "Incidents available for review.";
     private static final String NO_INCIDENTS_AVAILABLE = "No incidents to report!";
+    private static final String NOT_POLLING_MSG = "Not Currently Polling Server Status.";
     private static final int DEFAULT_POLLING_RATE = 10;
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
@@ -91,13 +92,16 @@ public class GUI extends javax.swing.JFrame {
                 if(jToggleButton1.isSelected()) {
                     try {
                         if(p.networkCheck(getCurrentRegion())) {
+                            // Throws network errors (IOException from not 
+                            // being able to openStream()).
                             setTextWhenOn();
                             jTextArea1.setText(setNewTextAreaMessage());
                         }
-                        else {
-                            networkErrorFound();
-                        }
-                    } catch (IOException ex) {}
+                    } catch (IOException ex) {
+                        // Catches network errors from not being able to openStream().
+                        System.out.println(ex);
+                        networkErrorFound();
+                    }
                 }
                 else {
                     interruptThreads();
@@ -119,8 +123,13 @@ public class GUI extends javax.swing.JFrame {
      * Interrupt all non-main threads.
      */
     private void interruptThreads() {
-        pollThread.interrupt();
-        counterThread.interrupt();
+        try {
+            pollThread.interrupt();
+            counterThread.interrupt();
+        }
+        catch (NullPointerException e) {
+            // The threads haven't been started; therefore, they cannot be interrupted.
+        }
     }
     
     /**
@@ -248,28 +257,29 @@ public class GUI extends javax.swing.JFrame {
         else {
             networkErrorFound();
         }
-        
+
         checkButtonTextOff();
-        
-        // Set default label values
+        resetStatusLabels();
+        turnAllIncidentButtonsOff();
+
+        // Setup incident textbox.
+        jTextArea1.setEditable(false);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setWrapStyleWord(true);  
+    }
+    
+    /**
+     * Sets the default status label values.
+     */
+    private void resetStatusLabels(){
         for (JLabel label : statusLabels) {
             label.setText(POLLING_OFF_MSG);
             decolorize(label);
         }
         
-        turnAllIncidentButtonsOff();
-        
         // Set polling rate info label to blank when polling is off
-        jLabel9.setText("Not Currently Polling Server Status.");
+        jLabel9.setText(NOT_POLLING_MSG);
         jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        // Setup incident textbox.
-        jTextArea1.setEditable(false);
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setWrapStyleWord(true);
-
-
-        
     }
     
     /**
@@ -358,6 +368,11 @@ public class GUI extends javax.swing.JFrame {
                         try {
                             Thread.sleep(getPollingRate() * 1000);
                             turnAllIncidentButtonsOff();
+                            
+                            if(p.networkCheck(getCurrentRegion())) {
+                                // Throws network errors (IOException from not 
+                                // being able to openStream()).
+                            }
                                                     
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
@@ -371,6 +386,10 @@ public class GUI extends javax.swing.JFrame {
                                 checkButtonTextOn();
                             }
                             setFormIcon();
+                        } catch (IOException ex) {
+                            // Catches network errors from not being able to openStream().
+                            System.out.println(ex);
+                            networkErrorFound();
                         }
                     }
                 }
@@ -735,15 +754,17 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
-     * Displays message box if there is a network error.
+     * Displays a message in jTextBox1 if there is a network error.
      */
     private void networkErrorFound() {
         jToggleButton1.setSelected(false);
-        
+        checkButtonTextOff();
+        resetStatusLabels();
+
         String error = "A connection to the server was unable to be made.\n\n"
            + "Either Riot's API servers are unresponsive or your network is "
            + "experiencing issues.  Please check your connection and try "
-           + "again.";
+           + "again by toggling the \"Click to check\" button.";
 
         //JOptionPane.showMessageDialog(new JFrame(), 
         //    error , "Network Error", JOptionPane.ERROR_MESSAGE);
