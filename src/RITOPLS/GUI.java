@@ -123,12 +123,12 @@ public class GUI extends javax.swing.JFrame {
      * Interrupt all non-main threads.
      */
     private void interruptThreads() {
-        try {
+        if(pollThread != null) {
             pollThread.interrupt();
-            counterThread.interrupt();
         }
-        catch (NullPointerException e) {
-            // The threads haven't been started; therefore, they cannot be interrupted.
+        
+        if(counterThread != null) {
+            counterThread.interrupt();
         }
     }
     
