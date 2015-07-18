@@ -13,7 +13,6 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
 /**
@@ -35,6 +34,7 @@ public class GUI extends javax.swing.JFrame {
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
     private final JButton[] incidentButtons;
+    private JButton lastClicked;
     private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     private boolean regionChanged;
     Thread pollThread, counterThread;
@@ -105,6 +105,7 @@ public class GUI extends javax.swing.JFrame {
                 }
                 else {
                     interruptThreads();
+                    lastClicked = null;
                 }
             }        
         });  
@@ -343,6 +344,8 @@ public class GUI extends javax.swing.JFrame {
 
                     while(jToggleButton1.isSelected()) {
                         try {
+                            allIncidents.clear();
+                            
                             // Set current status for each service.
                             try {
                                 statusInfo = p.getStatus(getCurrentRegion());
@@ -353,6 +356,28 @@ public class GUI extends javax.swing.JFrame {
                             }
                             
                             setStatusStrings(statusInfo);
+                            
+                            /*
+                             * Case 1:
+                             *   - Set default text if incidents go away on refresh.
+                             * 
+                             * Case 2:
+                             *   - Set default text if incidents exist and jToggleButton1
+                             *     was toggled.
+                             * 
+                             * Case 3:
+                             *   - Set default text if incidents go away on refresh
+                             *     while the incidents for a selected service were being
+                             *     displayed.
+                             * 
+                             */
+                            if ((allIncidents.isEmpty())                                 // Case 1
+                                    || (!allIncidents.isEmpty() && lastClicked == null)  // Case 2
+                                    || (lastClicked != null && !lastClicked.isEnabled()) // Case 3
+                                    ) {
+                                jTextArea1.setText(setNewTextAreaMessage());
+                                lastClicked = null;
+                            }
                             
                             if(regionChanged) {
                                 jTextArea1.setText(setNewTextAreaMessage());
@@ -404,7 +429,7 @@ public class GUI extends javax.swing.JFrame {
             private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
                                                     throws InterruptedException {
                 
-                String incidentString, serviceString, status, severity, updatedTime, contentString, area = "";
+                String serviceString = "", status = "", severity = "", updatedTime = "", contentString = "", area = "";
                 ArrayList<HashMap<String, String>> currentServiceIncList;
                 HashMap<String, String> currentInc = new HashMap();
                 boolean incidentFound;
@@ -528,7 +553,7 @@ public class GUI extends javax.swing.JFrame {
                 
                 final String currentService = serviceString;
                 
-                if(button.isSelected()) {
+                if(lastClicked == button) {
                     handleTextArea(currentService);
                 }
                 
@@ -536,6 +561,7 @@ public class GUI extends javax.swing.JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         handleTextArea(currentService);
+                        lastClicked = button;
                     }
                 });
             }
@@ -562,7 +588,7 @@ public class GUI extends javax.swing.JFrame {
                     jTextArea1.setCaretPosition(0);
                 }
             }
-            
+
             /**
              * Sets the value of the polling info label (jLabel9) based on the 
              * current polling rate.
@@ -722,7 +748,7 @@ public class GUI extends javax.swing.JFrame {
      */
     private boolean checkAllOnline() {
         for(JLabel label : statusLabels) {
-            if(label.toString().equals("Offline")) {
+            if(!label.getText().equals("Online")) {
                 return false;
             }
         }
