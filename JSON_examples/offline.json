@@ -18,7 +18,7 @@
       {  
          "name":"Game",
          "slug":"game",
-         "status":"offline",
+         "status":"offlinehgfhfh",
          "incidents":[  
             {  
                "id":2504,
@@ -28,7 +28,7 @@
                   {  
                      "id":2859,
                      "author":"",
-                     "content":"Something in Russian saying that there is a problem.",
+                     "content":"Something in Russian saying that there is a problem 2.",
                      "severity":"info",
                      "created_at":"2015-06-09T21:36:00.000Z",
                      "updated_at":"2015-06-09T21:36:02.000Z",
@@ -39,7 +39,7 @@
                   {  
                      "id":2852,
                      "author":"",
-                     "content":"Something in Russian saying that there is a problem.",
+                     "content":"Something in Russian saying that there is a problem 1.",
                      "severity":"info",
                      "created_at":"2015-06-08T21:32:46.000Z",
                      "updated_at":"2015-06-08T21:32:46.000Z",

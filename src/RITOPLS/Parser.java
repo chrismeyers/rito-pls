@@ -2,7 +2,9 @@ package RITOPLS;
 
 import com.google.gson.*;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -20,6 +22,9 @@ public class Parser {
     private String currentUrlData;
     private String baseUrl;
     private boolean networkOK;
+    
+    private static final boolean DEBUG = false;
+    private static final String DEBUG_FILE = "offline.json";
     
     /**
      * Constructor for the Parser class.
@@ -51,7 +56,13 @@ public class Parser {
         BufferedReader reader = null;
         try {
             URL statusUrlData = new URL(urlString);
-            reader = new BufferedReader(new InputStreamReader(statusUrlData.openStream()));
+            if(DEBUG) {
+                InputStream fileStream = new FileInputStream(System.getProperty("user.dir") + "/JSON_examples/" + DEBUG_FILE);
+                reader = new BufferedReader(new InputStreamReader(fileStream));
+            }
+            else {
+                reader = new BufferedReader(new InputStreamReader(statusUrlData.openStream()));
+            }
             StringBuilder buffer = new StringBuilder();
             int read;
             char[] chars = new char[4096];
@@ -163,6 +174,7 @@ public class Parser {
             statusValues.put(status, (ArrayList)services.clone());
             services.clear(); // Make sure old incidents aren't copied if current service has no incidents.
             statusInfo.put(service, (HashMap)statusValues.clone());
+            statusValues.clear(); // Make sure old statuses aren't copied if current service has no incidents.
         }
         
         return statusInfo;

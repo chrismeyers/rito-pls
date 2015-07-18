@@ -367,6 +367,7 @@ public class GUI extends javax.swing.JFrame {
 
                         try {
                             Thread.sleep(getPollingRate() * 1000);
+                            allIncidents.clear();
                             turnAllIncidentButtonsOff();
                             
                             if(p.networkCheck(getCurrentRegion())) {
@@ -526,28 +527,40 @@ public class GUI extends javax.swing.JFrame {
                 button.setEnabled(true);
                 
                 final String currentService = serviceString;
-                final JTextArea textarea = jTextArea1;
+                
+                if(button.isSelected()) {
+                    handleTextArea(currentService);
+                }
                 
                 button.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        textarea.setForeground(Color.black);
-                        textarea.setText("");
-                        for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
-                            textarea.append(allIncidents.get(currentService).get(i).get("area") + " :: ");
-                            textarea.append(allIncidents.get(currentService).get(i).get("severity") + " :: ");
-                            textarea.append(allIncidents.get(currentService).get(i).get("updatedTime") + " :: ");
-                            textarea.append(allIncidents.get(currentService).get(i).get("contentString"));
-                            
-                            if(i != allIncidents.get(currentService).size()-1) {
-                                textarea.append("\n\n");
-                            }
-                            
-                            // "Scroll" to top of jTextBox1
-                            textarea.setCaretPosition(0);
-                        }
+                        handleTextArea(currentService);
                     }
                 });
+            }
+            
+            /**
+             * Prints data to jTextArea1.
+             * 
+             * @param currentService The current service to output.
+             */
+            private void handleTextArea(String currentService) {
+                jTextArea1.setForeground(Color.black);
+                jTextArea1.setText("");
+                for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
+                    jTextArea1.append(allIncidents.get(currentService).get(i).get("area") + " :: ");
+                    jTextArea1.append(allIncidents.get(currentService).get(i).get("severity") + " :: ");
+                    jTextArea1.append(allIncidents.get(currentService).get(i).get("updatedTime") + " :: ");
+                    jTextArea1.append(allIncidents.get(currentService).get(i).get("contentString"));
+
+                    if(i != allIncidents.get(currentService).size()-1) {
+                        jTextArea1.append("\n\n");
+                    }
+
+                    // "Scroll" to top of jTextBox1
+                    jTextArea1.setCaretPosition(0);
+                }
             }
             
             /**
@@ -645,7 +658,7 @@ public class GUI extends javax.swing.JFrame {
             // Grey Icon - IDLE
             img = resources.ResourceLoader.getImage("iconIDLE.png");
         }
-        else if(checkAllOnline() && jToggleButton1.isSelected()) {
+        else if(checkAllOnline()) {
             if(checkForAnIncident()) {
                 // Yellow Icon - INCDENTS EXIST
                 img = resources.ResourceLoader.getImage("iconINCIDENT.png");
@@ -829,13 +842,21 @@ public class GUI extends javax.swing.JFrame {
 
         jLabel4.setText("jLabel4");
 
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         jLabel5.setText("jLabel5");
+        jLabel5.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
+        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         jLabel6.setText("jLabel6");
+        jLabel6.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         jLabel7.setText("jLabel7");
+        jLabel7.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
+        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         jLabel8.setText("jLabel8");
+        jLabel8.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
         jButton1.setText("jButton1");
 
