@@ -24,7 +24,7 @@ import javax.swing.SwingConstants;
 public class GUI extends javax.swing.JFrame {
     private String region;
     private final Parser p;
-    private final StaticData sdata;
+    private StaticData sdata;
     private int pollingRate;
     private static final String POLLING_OFF_MSG = "N/A";
     private static final String INCIDENTS_AVAILABLE = "Incidents available for review.";
@@ -432,6 +432,7 @@ public class GUI extends javax.swing.JFrame {
                 String serviceString = "", status = "", severity = "", updatedTime = "", contentString = "", area = "";
                 ArrayList<HashMap<String, String>> currentServiceIncList;
                 HashMap<String, String> currentInc = new HashMap();
+                ArrayList<String> severities = new ArrayList<String>();
                 boolean incidentFound;
                            
                 
@@ -486,11 +487,13 @@ public class GUI extends javax.swing.JFrame {
                                 allIncidents.put(serviceString, currentServiceIncList);
                             }
                             
-                            populateIncidentButton(service, severity);
+                            severities.add(severity);
                             populateIncidentBox(service, serviceString);
                             
                             System.out.println(area + " :: " + severity + " :: "+ updatedTime + " :: " + contentString);
                         }
+                        populateIncidentButton(service, severities);
+                        severities.clear();
                     }
                 }
             }  
@@ -501,36 +504,36 @@ public class GUI extends javax.swing.JFrame {
              * @param service The current service that has an incident.
              * @param severity The severity of the current incident.
              */
-            private void populateIncidentButton(int service, String severity) {
+            private void populateIncidentButton(int service, ArrayList<String> severities) {
                 
                 final JButton button = incidentButtons[service];
                 button.setEnabled(true);
-                
-                // TODO: set severity to prioritize the most severe incident in list.
+
+                String severity = sdata.determineMostSevere(severities);
                 
                 switch(severity) {
-                    case "Warn":
-                        button.setForeground(Color.white);
-                        button.setBackground(Color.black);
-                        button.setText("!");
-                        break;
-                        
                     case "Info":
                         button.setForeground(Color.white);
                         button.setBackground(Color.black);
                         button.setText("!");
                         break;
                         
-                    case "Alert":
-                        button.setForeground(Color.yellow);
+                    case "Warn":
+                        button.setForeground(Color.white);
                         button.setBackground(Color.black);
-                        button.setText("!!");
+                        button.setText("!");
+                        break;
+                        
+                    case "Alert":
+                        button.setForeground(Color.white);
+                        button.setBackground(Color.black);
+                        button.setText("! !");
                         break;
                         
                     case "Error":
-                        button.setForeground(Color.red);
+                        button.setForeground(Color.white);
                         button.setBackground(Color.black);
-                        button.setText("!!!");
+                        button.setText("! ! !");
                         break;
                         
                     default:
