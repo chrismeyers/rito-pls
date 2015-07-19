@@ -61,7 +61,7 @@ public class Parser {
                 reader = new BufferedReader(new InputStreamReader(fileStream));
             }
             else {
-                reader = new BufferedReader(new InputStreamReader(statusUrlData.openStream()));
+                reader = new BufferedReader(new InputStreamReader(statusUrlData.openStream(), "UTF-8"));
             }
             StringBuilder buffer = new StringBuilder();
             int read;
