@@ -73,9 +73,6 @@ public class GUI extends javax.swing.JFrame {
                 // Update labels in case naming convention in current region changed.
                 populateServicesLabels();
                 
-                // Clean array for new region.
-                allIncidents.clear();
-                
                 // Keeps jToggleButton1's text from incorrectly changing to 
                 //"Checking..."when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
@@ -344,8 +341,6 @@ public class GUI extends javax.swing.JFrame {
 
                     while(jToggleButton1.isSelected()) {
                         try {
-                            allIncidents.clear();
-                            
                             // Set current status for each service.
                             try {
                                 statusInfo = p.getStatus(getCurrentRegion());
@@ -383,9 +378,7 @@ public class GUI extends javax.swing.JFrame {
                                 jTextArea1.setText(setNewTextAreaMessage());
                                 regionChanged = false;
                             }
-                            
                             setFormIcon();
-                            
                         } 
                         catch (IOException ex) {} 
                         catch (InterruptedException ex) {}
@@ -751,7 +744,7 @@ public class GUI extends javax.swing.JFrame {
      */
     private boolean checkAllOnline() {
         for(JLabel label : statusLabels) {
-            if(!label.getText().equals("Online")) {
+            if(!label.getText().equals("Online") && !label.getText().equals(POLLING_OFF_MSG)) {
                 return false;
             }
         }
