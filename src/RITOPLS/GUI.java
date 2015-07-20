@@ -341,6 +341,8 @@ public class GUI extends javax.swing.JFrame {
 
                     while(jToggleButton1.isSelected()) {
                         try {
+                            allIncidents.clear();
+                            
                             // Set current status for each service.
                             try {
                                 statusInfo = p.getStatus(getCurrentRegion());
