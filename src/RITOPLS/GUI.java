@@ -1,8 +1,8 @@
 package RITOPLS;
 
 import java.awt.AWTException;
-import java.awt.CheckboxMenuItem;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Menu;
 import java.awt.MenuItem;
@@ -11,16 +11,19 @@ import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * This class provides a GUI interface that reflects the status of League of Legends 
@@ -142,10 +145,20 @@ public class GUI extends javax.swing.JFrame {
         this.setTitle(StaticData.PROGRAM_TITLE);
         this.setResizable(false);
         setFormIcon();
+        
+        jMenu1.setText(StaticData.MENU_FILE);
         jMenuItem1.setText(StaticData.MENU_POLLING);
         jMenuItem2.setText(StaticData.MENU_MINIMIZE);
         jMenuItem3.setText(StaticData.MENU_EXIT);
+        jMenu2.setText(StaticData.MENU_HELP);
+        jMenu3.setText(StaticData.MENU_DEBUG);
+        jCheckBoxMenuItem1.setText(StaticData.MENU_DEBUG_MODE);
         jMenuItem4.setText(StaticData.MENU_ABOUT);
+        jMenuItem5.setText(StaticData.MENU_DEBUG_FILE);
+        
+        jCheckBoxMenuItem1.setSelected(false);
+        
+        jLabel10.setText(StaticData.DEBUGGING_OFF_MSG);
         
         // Polling rate menu item listener
         jMenuItem1.addActionListener(new ActionListener() {
@@ -171,6 +184,41 @@ public class GUI extends javax.swing.JFrame {
             }        
         });
         
+        // Toggle Debug Mode
+        jCheckBoxMenuItem1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                turnAllIncidentButtonsOff();
+                p.toggleDebugMode();
+                if(p.getDebugStatus()) {
+                    jLabel10.setText(StaticData.DEBUGGING_ON_MSG);
+                    setTitle(false);
+                }
+                else {
+                    jLabel10.setText(StaticData.DEBUGGING_OFF_MSG);
+                    setTitle(true);
+                }
+
+                toggleCheckButton(); // Reset polling after debug toggle.
+            }
+        });
+        
+        // Set debug file.
+        jMenuItem5.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON", "JSON");
+                fileChooser.addChoosableFileFilter(filter);
+                int file = fileChooser.showOpenDialog(null);
+                if(file == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    p.setDebugFile(selectedFile.getAbsolutePath());
+                    toggleCheckButton(); // Reset polling for new debug file.
+                }
+            }
+        });
+        
         // About menu item listener
         jMenuItem4.addActionListener(new ActionListener() {
             @Override
@@ -180,46 +228,56 @@ public class GUI extends javax.swing.JFrame {
         });
     }
     
+    /**
+     * Allows access to setTitle() from within the debug menuitem actionListener.
+     * 
+     * @param debugMode The current state of debugging.
+     */
+    private void setTitle(boolean debugMode) {
+        if(debugMode) {
+            this.setTitle(StaticData.PROGRAM_TITLE);
+        }
+        else {
+            this.setTitle(StaticData.DEBUG_TAG + " " + StaticData.PROGRAM_TITLE);
+        }
+    }
+    
+    /**
+     * Raises a window showing info about the program.
+     */
     private void displayAboutWindow() {
         JOptionPane.showMessageDialog(new JFrame(), 
             StaticData.ABOUT_ABOUT_MSG + StaticData.ABOUT_LEGAL_MSG,
             StaticData.ABOUT_TITLE, JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * Populates and raises a window used to specify the polling rate for the
+     * program.
+     */
     private void displayPollingRateWindow() {
-        ArrayList<String> intervals = new ArrayList<String>();
-        String pollingRate = "";
+        // An ArrayList is used here instead of an Array for the indexOf() method
+        // in order to set the starting value in the 7th param of the JOptionPane.
+        ArrayList<String> intervals = sdata.getPollingRatesArrList();
+        String pollRate = "";
         int rate = 0;
-
-        intervals.add("1");
-        for(int invl = 5; invl <= 60; invl+=5) {
-            intervals.add(invl +  "");
-
-            if(invl % 20 == 0) {
-                invl += 10;
-            }
-
-            if(invl % 10 == 0) {
-                invl += 5;
-            }
-        }
 
         String startingValue = getPollingRate() + "";
 
-        pollingRate = (String) JOptionPane.showInputDialog(new JFrame(), 
+        pollRate = (String) JOptionPane.showInputDialog(new JFrame(), 
             StaticData.POLLING_WINDOW_MSG,
-            StaticData.POLLING_WINDOW_TITLE,
+            StaticData.MENU_POLLING,
             JOptionPane.QUESTION_MESSAGE, 
             null, 
             intervals.toArray(), 
             intervals.get(intervals.indexOf(startingValue)));
 
-        if(pollingRate == null) {   
-            // User Pressed cancel, get current rate.
-            pollingRate = startingValue;
+        if(pollRate == null) {   
+            // User pressed cancel, get current rate.
+            pollRate = startingValue;
         }
 
-        rate = Integer.parseInt(pollingRate);
+        rate = Integer.parseInt(pollRate);
 
         setPollingRate(rate);
     }
@@ -684,6 +742,10 @@ public class GUI extends javax.swing.JFrame {
         pollThread.start();
     }
     
+    /**
+     * Sets the GUI form icon based on the status of services for the current
+     * region.
+     */
     private void setFormIcon() {
         Image img;
         
@@ -794,6 +856,16 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
+     * Toggles check button when changing to and from debug mode, and vice-versa.
+     */
+    private void toggleCheckButton() {
+        if(jToggleButton1.isSelected()) {
+            jToggleButton1.doClick(); // Toggle off
+            jToggleButton1.doClick(); // Toggle on
+        }
+    }
+    
+    /**
      * Reset the server status labels to black when the program is not checking
      * status.
      */
@@ -818,6 +890,9 @@ public class GUI extends javax.swing.JFrame {
         jTextArea1.setText(StaticData.NETWORK_ERROR_MSG);
     }
     
+    /**
+     * Minimizes the GUI to an icon on the notification area.
+     */
     private void minimizeToTray() {
         if (!SystemTray.isSupported()) {
             System.out.println("SystemTray is not supported");
@@ -840,7 +915,8 @@ public class GUI extends javax.swing.JFrame {
         MenuItem about = new MenuItem(StaticData.MENU_ABOUT);
         Menu setRegion = new Menu(StaticData.MENU_SET_REGION);
         setupRegionTrayMenu(setRegion);
-        MenuItem setPolling = new MenuItem(StaticData.MENU_POLLING);
+        Menu setPolling = new Menu(StaticData.MENU_POLLING);
+        setupPollingRateTrayMenu(setPolling);
         MenuItem maximize = new MenuItem(StaticData.MENU_MAXIMIZE);
         MenuItem quit = new MenuItem(StaticData.MENU_EXIT);
   
@@ -903,11 +979,22 @@ public class GUI extends javax.swing.JFrame {
         });
     }
     
+    /**
+     * Restores the GUI from the notification area and cleans up icon.
+     * 
+     * @param tray The current system tray icon.
+     * @param trayIcon The current system tray icon.
+     */
     private void maximizeFromTray(SystemTray tray, TrayIcon trayIcon) {
         this.setVisible(true);
         tray.remove(trayIcon);
     }
     
+    /**
+     * Populates the system try region menu.
+     * 
+     * @param setRegion The tray menu that contains the regions.
+     */
     private void setupRegionTrayMenu(final Menu setRegion) {
         String[] regions = sdata.getRegions();
         final MenuItem[] regionMenuItems = new MenuItem[regions.length];
@@ -917,6 +1004,9 @@ public class GUI extends javax.swing.JFrame {
             final MenuItem currentRegion = new MenuItem(r);
             regionMenuItems[i] = currentRegion;
             setRegion.add(currentRegion);
+            if(r.toLowerCase().equals(getCurrentRegion())) {
+                currentRegion.setFont(new Font("default", Font.BOLD, 12));
+            }
             i++;
         }
 
@@ -926,7 +1016,11 @@ public class GUI extends javax.swing.JFrame {
             regionMenuItems[j].addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    for(MenuItem mi : regionMenuItems) {
+                        mi.setFont(new Font("default", Font.PLAIN, 12));
+                    }
                     setCurrentRegion(regionMenuItems[index].getLabel());
+                    regionMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
                     jComboBox1.setSelectedIndex(index);
                     setVariableMenuItems();
                 }        
@@ -934,13 +1028,48 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    private void setupPollingRateTrayMenu(final Menu setPolling) {
+        String[] rates = sdata.getPollingRatesArr();
+        final MenuItem[] pollingRateMenuItems = new MenuItem[rates.length];
+        int i = 0;
+
+        for(final String r : rates) {
+            final MenuItem currentRate = new MenuItem(r);
+            pollingRateMenuItems[i] = currentRate;
+            setPolling.add(currentRate);
+            if(Integer.parseInt(r) == getPollingRate()) {
+                currentRate.setFont(new Font("default", Font.BOLD, 12));
+            }
+            i++;
+        }
+
+        // Add action listeners for all region menu items
+        for(int j = 0; j < pollingRateMenuItems.length; j++) {
+            final int index = j;
+            pollingRateMenuItems[j].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    for(MenuItem mi : pollingRateMenuItems) {
+                        mi.setFont(new Font("default", Font.PLAIN, 12));
+                    }
+                    setPollingRate(Integer.parseInt(pollingRateMenuItems[index].getLabel()));
+                    pollingRateMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
+                    setVariableMenuItems();
+                }        
+            });
+        }
+    }
+    
+    /**
+     * Populates tray menu items that periodically change.
+     */
     private void setVariableMenuItems() {
         if(jToggleButton1.isSelected()) {
-            info.setLabel("[" + getCurrentRegion().toUpperCase() + "]"+ "     Refreshing every " + getPollingRate() + "s");
+            info.setLabel("[" + getCurrentRegion().toUpperCase() + "] :: " + "Refreshing every " + getPollingRate() + "s");
             togglePolling.setLabel(StaticData.MENU_POLLING_OFF);
         }
         else {
-            info.setLabel("[" + getCurrentRegion().toUpperCase() + "]" + "     Not currently polling");
+            info.setLabel("[" + getCurrentRegion().toUpperCase() + "] :: " + "Not currently polling");
             togglePolling.setLabel(StaticData.MENU_POLLING_ON);
         }
     }
@@ -971,12 +1100,16 @@ public class GUI extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
+        jLabel10 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
+        jMenu3 = new javax.swing.JMenu();
+        jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
+        jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem4 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -1027,27 +1160,49 @@ public class GUI extends javax.swing.JFrame {
 
         jButton4.setText("jButton1");
 
+        jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel9.setText("jLabel9");
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        jMenu1.setText("File");
+        jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel10.setText("jLabel10");
+        jLabel10.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
+        jMenu1.setText("jMenu1");
+
+        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItem1.setText("jMenuItem1");
         jMenu1.add(jMenuItem1);
 
+        jMenuItem2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_M, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItem2.setText("jMenuItem2");
         jMenu1.add(jMenuItem2);
 
+        jMenuItem3.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItem3.setText("jMenuItem3");
         jMenu1.add(jMenuItem3);
 
         jMenuBar1.add(jMenu1);
 
-        jMenu2.setText("Help");
+        jMenu2.setText("jMenu2");
 
+        jMenu3.setText("jMenu3");
+
+        jCheckBoxMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D, java.awt.event.InputEvent.CTRL_MASK));
+        jCheckBoxMenuItem1.setSelected(true);
+        jCheckBoxMenuItem1.setText("jCheckBoxMenuItem1");
+        jMenu3.add(jCheckBoxMenuItem1);
+
+        jMenuItem5.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem5.setText("jMenuItem5");
+        jMenu3.add(jMenuItem5);
+
+        jMenu2.add(jMenu3);
+
+        jMenuItem4.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItem4.setText("jMenuItem4");
         jMenu2.add(jMenuItem4);
 
@@ -1059,18 +1214,10 @@ public class GUI extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(120, 120, 120)
-                .addComponent(jLabel9)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(50, 50, 50)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
-                        .addComponent(jToggleButton1))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -1088,13 +1235,27 @@ public class GUI extends javax.swing.JFrame {
                             .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
-                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
+                        .addComponent(jToggleButton1)))
                 .addGap(50, 50, 50))
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(120, 120, 120)
+                        .addComponent(jLabel9))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(135, 135, 135)
+                        .addComponent(jLabel10)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(36, 36, 36)
+                .addComponent(jLabel10)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jToggleButton1)
                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1121,7 +1282,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1141,8 +1302,10 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1153,11 +1316,13 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenu jMenu3;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
+    private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JToggleButton jToggleButton1;

@@ -23,8 +23,8 @@ public class Parser {
     private String baseUrl;
     private boolean networkOK;
     
-    private static final boolean DEBUG = false;
-    private static final String DEBUG_FILE = "offline.json";
+    private static boolean DEBUG = false;
+    private static String DEBUG_FILE = "F:\\Development\\League of Legends\\rito-pls\\JSON_examples\\offline.json";
     
     /**
      * Constructor for the Parser class.
@@ -57,7 +57,7 @@ public class Parser {
         try {
             URL statusUrlData = new URL(urlString);
             if(DEBUG) {
-                InputStream fileStream = new FileInputStream(System.getProperty("user.dir") + "/JSON_examples/" + DEBUG_FILE);
+                InputStream fileStream = new FileInputStream(DEBUG_FILE);
                 reader = new BufferedReader(new InputStreamReader(fileStream));
             }
             else {
@@ -69,7 +69,7 @@ public class Parser {
             while ((read = reader.read(chars)) != -1) {
                 buffer.append(chars, 0, read); 
             }
-
+            
             return buffer.toString();
         } 
         finally {
@@ -204,8 +204,12 @@ public class Parser {
      * @throws IOException 
      */
     public boolean networkCheck(String region) throws IOException {
+        // Debug mode can be run offline.
+        if(DEBUG) {
+            return true;
+        }
+        
         try {
-            //getUrlData(buildUrl(region));
             URL statusUrlData = new URL(buildUrl(region));
             statusUrlData.openStream();
             networkOK = true;
@@ -225,5 +229,17 @@ public class Parser {
      */
     public boolean isNetworkUp() {
         return networkOK;
+    }
+    
+    public void toggleDebugMode() {
+        DEBUG = !DEBUG;
+    }
+    
+    public boolean getDebugStatus() {
+        return DEBUG;
+    }
+    
+    public void setDebugFile(String fileName) {
+        DEBUG_FILE = fileName;
     }
 }

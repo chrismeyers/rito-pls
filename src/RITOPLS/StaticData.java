@@ -8,7 +8,10 @@ import java.util.ArrayList;
  * @author Chris Meyers
  */
 public class StaticData {
-    public static final String PROGRAM_TITLE          = "League of Legends Server Status Checker";
+    public static final String PROGRAM_TITLE          = "League of Legends Status Checker";
+    public static final String DEBUG_TAG              = "[DEBUG]";
+    public static final String MENU_FILE              = "File";
+    public static final String MENU_HELP              = "Help";
     public static final String MENU_SET_REGION        = "Set Region";
     public static final String MENU_POLLING           = "Set Polling Rate";
     public static final String MENU_POLLING_ON        = "Start checking";
@@ -16,15 +19,19 @@ public class StaticData {
     public static final String MENU_MINIMIZE          = "Minimize";
     public static final String MENU_MAXIMIZE          = "Maximize";
     public static final String MENU_EXIT              = "Exit";
+    public static final String MENU_DEBUG             = "Debug";
+    public static final String MENU_DEBUG_MODE        = "Debug Mode";
+    public static final String MENU_DEBUG_FILE        = "Set Debug File";
     public static final String MENU_ABOUT             = "About";
     public static final String BUTTON_POLLING_ON      = "Checking...";
     public static final String BUTTON_POLLING_OFF     = "Click to check";
     public static final String POLLING_OFF_MSG        = "N/A";
-    public static final String POLLING_WINDOW_TITLE   = "Set Polling rate";
     public static final String POLLING_WINDOW_MSG     = "How often should the server be checked\n(in seconds) ?";
     public static final String INCIDENTS_AVAILABLE    = "Incidents available for review.";
     public static final String NO_INCIDENTS_AVAILABLE = "No incidents to report!";
     public static final String NOT_POLLING_MSG        = "Not Currently Polling Server Status.";
+    public static final String DEBUGGING_OFF_MSG      = "\u0000";
+    public static final String DEBUGGING_ON_MSG       = "***Currently in Debug Mode***";
     public static final String SERVICE_ONLINE         = "Online";
     public static final String SERVICE_OFFLINE        = "Offline"; 
     public static final String SERVICE_ALERT          = "Alert"; 
@@ -68,6 +75,8 @@ public class StaticData {
     private static final int WARN_PRECEDENCE          = 1;
     private static final int ALERT_PRECEDENCE         = 2;
     private static final int ERROR_PRECEDENCE         = 3;
+    
+    private static final String[] POLLING_RATES       = {"1", "5", "10", "30", "45", "60"};
 
     public StaticData() {
     }
@@ -177,5 +186,17 @@ public class StaticData {
             
         }
         return highestSeverity;
+    }
+    
+    public String[] getPollingRatesArr() {
+        return POLLING_RATES;
+    }
+    
+    public ArrayList<String> getPollingRatesArrList() {
+        ArrayList<String> temp = new ArrayList();
+        for(String rate : POLLING_RATES) {
+            temp.add(rate);
+        }
+        return temp;
     }
 }
