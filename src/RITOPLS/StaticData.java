@@ -8,19 +8,66 @@ import java.util.ArrayList;
  * @author Chris Meyers
  */
 public class StaticData {
-    private String[] servicesB = {"Boards", "Game", "Store", "Website"};
-    private String[] servicesF = {"Forums", "Game", "Store", "Website"};
-    private String[] regions = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE"};
+    public static final String PROGRAM_TITLE          = "League of Legends Server Status Checker";
+    public static final String MENU_SET_REGION        = "Set Region";
+    public static final String MENU_POLLING           = "Set Polling Rate";
+    public static final String MENU_POLLING_ON        = "Start checking";
+    public static final String MENU_POLLING_OFF       = "Stop checking";
+    public static final String MENU_MINIMIZE          = "Minimize";
+    public static final String MENU_MAXIMIZE          = "Maximize";
+    public static final String MENU_EXIT              = "Exit";
+    public static final String MENU_ABOUT             = "About";
+    public static final String BUTTON_POLLING_ON      = "Checking...";
+    public static final String BUTTON_POLLING_OFF     = "Click to check";
+    public static final String POLLING_OFF_MSG        = "N/A";
+    public static final String POLLING_WINDOW_TITLE   = "Set Polling rate";
+    public static final String POLLING_WINDOW_MSG     = "How often should the server be checked\n(in seconds) ?";
+    public static final String INCIDENTS_AVAILABLE    = "Incidents available for review.";
+    public static final String NO_INCIDENTS_AVAILABLE = "No incidents to report!";
+    public static final String NOT_POLLING_MSG        = "Not Currently Polling Server Status.";
+    public static final String SERVICE_ONLINE         = "Online";
+    public static final String SERVICE_OFFLINE        = "Offline"; 
+    public static final String SERVICE_ALERT          = "Alert"; 
+    public static final String SERVICE_DEPLOYING      = "Deploying"; 
+    public static final int DEFAULT_POLLING_RATE      = 10;
     
-    public static final String INFO_STRING  = "Info";
-    public static final String WARN_STRING  = "Warn";
-    public static final String ALERT_STRING = "Alert";
-    public static final String ERROR_STRING = "Error";
+    public static final String INFO_STRING            = "Info";
+    public static final String WARN_STRING            = "Warn";
+    public static final String ALERT_STRING           = "Alert";
+    public static final String ERROR_STRING           = "Error";
     
-    private static final int INFO_PRECEDENCE  = 1;
-    private static final int WARN_PRECEDENCE  = 1;
-    private static final int ALERT_PRECEDENCE = 2;
-    private static final int ERROR_PRECEDENCE = 3;
+    public static final String INFO_SYMBOL            = "!";
+    public static final String WARN_SYMBOL            = "!";
+    public static final String ALERT_SYMBOL           = "! !";
+    public static final String ERROR_SYMBOL           = "! ! !";
+    public static final String WTF_SYMBOL             = "?";
+    
+    public static final String ABOUT_TITLE            = "About";
+    public static final String ABOUT_ABOUT_MSG        = "Developed by: Chris Meyers || http://chrismeyers.info\n\n"
+                                                        + "rito-pls is a java application that reports the current League\n"
+                                                        + "of Legends service statuses for a specified region.  The\n"
+                                                        + "application queries the League of Legends API periodically and\n"
+                                                        + "presents the current status of several services (Boards, Game,\n"
+                                                        + "Store and Website).\n\n";
+    public static final String ABOUT_LEGAL_MSG        = "riot-pls isn’t endorsed by Riot Games and doesn’t reflect the\n"
+                                                        + "views or opinions of Riot Games or anyone officially involved\n"
+                                                        + "in producing or managing League of Legends. League of Legends\n"
+                                                        + "and Riot Games are trademarks or registered trademarks of Riot\n"
+                                                        + "Games, Inc. League of Legends © Riot Games, Inc.";
+    
+    public static final String NETWORK_ERROR_MSG      = "A connection to the server was unable to be made.\n\n"
+                                                        + "Either Riot's API servers are unresponsive or your network is "
+                                                        + "experiencing issues.  Please check your connection and try "
+                                                        + "again by toggling the \"Click to check\" button.";
+    
+    private String[] servicesB                        = {"Boards", "Game", "Store", "Website"};
+    private String[] servicesF                        = {"Forums", "Game", "Store", "Website"};
+    private String[] regions                          = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE"};
+    
+    private static final int INFO_PRECEDENCE          = 1;
+    private static final int WARN_PRECEDENCE          = 1;
+    private static final int ALERT_PRECEDENCE         = 2;
+    private static final int ERROR_PRECEDENCE         = 3;
 
     public StaticData() {
     }

@@ -1,7 +1,14 @@
 package RITOPLS;
 
+import java.awt.AWTException;
+import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Image;
+import java.awt.Menu;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -26,11 +33,6 @@ public class GUI extends javax.swing.JFrame {
     private final Parser p;
     private StaticData sdata;
     private int pollingRate;
-    private static final String POLLING_OFF_MSG = "N/A";
-    private static final String INCIDENTS_AVAILABLE = "Incidents available for review.";
-    private static final String NO_INCIDENTS_AVAILABLE = "No incidents to report!";
-    private static final String NOT_POLLING_MSG = "Not Currently Polling Server Status.";
-    private static final int DEFAULT_POLLING_RATE = 10;
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
     private final JButton[] incidentButtons;
@@ -38,6 +40,9 @@ public class GUI extends javax.swing.JFrame {
     private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     private boolean regionChanged;
     Thread pollThread, counterThread;
+    TrayIcon trayIcon;
+    MenuItem info;
+    MenuItem togglePolling;
     
     /**
      * Creates new form GUI
@@ -53,7 +58,7 @@ public class GUI extends javax.swing.JFrame {
         incidentButtons = new JButton[]{jButton1, jButton2, jButton3, jButton4};
         
         setupMenus();
-        setPollingRate(DEFAULT_POLLING_RATE);
+        setPollingRate(StaticData.DEFAULT_POLLING_RATE);
         populateRegionComboBox(sdata.getRegions());
         
         //Initialize region to first item in ComboBox (NA)
@@ -134,57 +139,32 @@ public class GUI extends javax.swing.JFrame {
      * Initializes menu items and adds ActionListeners to these items.
      */
     private void setupMenus() {
-        this.setTitle("League of Legends Server Status Checker");
+        this.setTitle(StaticData.PROGRAM_TITLE);
         this.setResizable(false);
         setFormIcon();
-        jMenuItem1.setText("Set Polling Rate");
-        jMenuItem2.setText("Quit");
-        jMenuItem3.setText("About");
+        jMenuItem1.setText(StaticData.MENU_POLLING);
+        jMenuItem2.setText(StaticData.MENU_MINIMIZE);
+        jMenuItem3.setText(StaticData.MENU_EXIT);
+        jMenuItem4.setText(StaticData.MENU_ABOUT);
         
         // Polling rate menu item listener
         jMenuItem1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ArrayList<String> intervals = new ArrayList<String>();
-                String pollingRate = "";
-                int rate = 0;
-                
-                intervals.add("1");
-                for(int invl = 5; invl <= 60; invl+=5) {
-                    intervals.add(invl +  "");
-                    
-                    if(invl % 20 == 0) {
-                        invl += 10;
-                    }
-                                        
-                    if(invl % 10 == 0) {
-                        invl += 5;
-                    }
-                }
-                
-                String startingValue = getPollingRate() + "";
-                
-                pollingRate = (String) JOptionPane.showInputDialog(new JFrame(), 
-                    "How often should the server be checked\n(in seconds) ?",
-                    "Polling rate",
-                    JOptionPane.QUESTION_MESSAGE, 
-                    null, 
-                    intervals.toArray(), 
-                    intervals.get(intervals.indexOf(startingValue)));
-                    
-                if(pollingRate == null) {   
-                    // User Pressed cancel, get current rate.
-                    pollingRate = startingValue;
-                }
-
-                rate = Integer.parseInt(pollingRate);
-                
-                setPollingRate(rate);
+                displayPollingRateWindow();
+            }        
+        });
+        
+        // Minimize to system tray.
+        jMenuItem2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                minimizeToTray();
             }        
         });
         
         // Quit menu item listener
-        jMenuItem2.addActionListener(new ActionListener() {
+        jMenuItem3.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
@@ -192,27 +172,56 @@ public class GUI extends javax.swing.JFrame {
         });
         
         // About menu item listener
-        jMenuItem3.addActionListener(new ActionListener() {
+        jMenuItem4.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String about = 
-                        "Developed by: Chris Meyers || http://chrismeyers.info\n\n"
-                        + "rito-pls is a java application that reports the current League\n"
-                        + "of Legends service statuses for a specified region.  The\n"
-                        + "application queries the League of Legends API periodically and\n"
-                        + "presents the current status of several services (Boards, Game,\n"
-                        + "Store and Website).\n\n";
-                String legal = 
-                        "riot-pls isn’t endorsed by Riot Games and doesn’t reflect the\n"
-                        + "views or opinions of Riot Games or anyone officially involved\n"
-                        + "in producing or managing League of Legends. League of Legends\n"
-                        + "and Riot Games are trademarks or registered trademarks of Riot\n"
-                        + "Games, Inc. League of Legends © Riot Games, Inc.";
-                JOptionPane.showMessageDialog(new JFrame(), 
-                            about + legal,
-                            "About", JOptionPane.INFORMATION_MESSAGE);
-            }        
+                displayAboutWindow();
+            }
         });
+    }
+    
+    private void displayAboutWindow() {
+        JOptionPane.showMessageDialog(new JFrame(), 
+            StaticData.ABOUT_ABOUT_MSG + StaticData.ABOUT_LEGAL_MSG,
+            StaticData.ABOUT_TITLE, JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void displayPollingRateWindow() {
+        ArrayList<String> intervals = new ArrayList<String>();
+        String pollingRate = "";
+        int rate = 0;
+
+        intervals.add("1");
+        for(int invl = 5; invl <= 60; invl+=5) {
+            intervals.add(invl +  "");
+
+            if(invl % 20 == 0) {
+                invl += 10;
+            }
+
+            if(invl % 10 == 0) {
+                invl += 5;
+            }
+        }
+
+        String startingValue = getPollingRate() + "";
+
+        pollingRate = (String) JOptionPane.showInputDialog(new JFrame(), 
+            StaticData.POLLING_WINDOW_MSG,
+            StaticData.POLLING_WINDOW_TITLE,
+            JOptionPane.QUESTION_MESSAGE, 
+            null, 
+            intervals.toArray(), 
+            intervals.get(intervals.indexOf(startingValue)));
+
+        if(pollingRate == null) {   
+            // User Pressed cancel, get current rate.
+            pollingRate = startingValue;
+        }
+
+        rate = Integer.parseInt(pollingRate);
+
+        setPollingRate(rate);
     }
     
     /**
@@ -271,12 +280,12 @@ public class GUI extends javax.swing.JFrame {
      */
     private void resetStatusLabels(){
         for (JLabel label : statusLabels) {
-            label.setText(POLLING_OFF_MSG);
+            label.setText(StaticData.POLLING_OFF_MSG);
             decolorize(label);
         }
         
         // Set polling rate info label to blank when polling is off
-        jLabel9.setText(NOT_POLLING_MSG);
+        jLabel9.setText(StaticData.NOT_POLLING_MSG);
         jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
     }
     
@@ -286,7 +295,7 @@ public class GUI extends javax.swing.JFrame {
     private void turnAllIncidentButtonsOff(){
         for (JButton button : incidentButtons) {
             button.setEnabled(false);
-            button.setText(POLLING_OFF_MSG);
+            button.setText(StaticData.POLLING_OFF_MSG);
             button.setBackground(null);
         }
     }
@@ -301,10 +310,10 @@ public class GUI extends javax.swing.JFrame {
         jTextArea1.setForeground(Color.black);
 
         if(jToggleButton1.isSelected() && !allIncidents.isEmpty()) {
-            return INCIDENTS_AVAILABLE;
+            return StaticData.INCIDENTS_AVAILABLE;
         }       
         
-        return NO_INCIDENTS_AVAILABLE;
+        return StaticData.NO_INCIDENTS_AVAILABLE;
     }
     
     /**
@@ -507,34 +516,34 @@ public class GUI extends javax.swing.JFrame {
                 String severity = sdata.determineMostSevere(severities);
                 
                 switch(severity) {
-                    case "Info":
+                    case StaticData.INFO_STRING:
                         button.setForeground(Color.white);
                         button.setBackground(Color.black);
-                        button.setText("!");
+                        button.setText(StaticData.INFO_SYMBOL);
                         break;
                         
-                    case "Warn":
+                    case StaticData.WARN_STRING:
                         button.setForeground(Color.white);
                         button.setBackground(Color.black);
-                        button.setText("!");
+                        button.setText(StaticData.WARN_SYMBOL);
                         break;
                         
-                    case "Alert":
+                    case StaticData.ALERT_STRING:
                         button.setForeground(Color.white);
                         button.setBackground(Color.black);
-                        button.setText("! !");
+                        button.setText(StaticData.ALERT_SYMBOL);
                         break;
                         
-                    case "Error":
+                    case StaticData.ERROR_STRING:
                         button.setForeground(Color.white);
                         button.setBackground(Color.black);
-                        button.setText("! ! !");
+                        button.setText(StaticData.ERROR_SYMBOL);
                         break;
                         
                     default:
                         button.setForeground(Color.magenta);
                         button.setBackground(Color.black);
-                        button.setText("?");
+                        button.setText(StaticData.WTF_SYMBOL);
                         break;
                 }
             }
@@ -652,16 +661,16 @@ public class GUI extends javax.swing.JFrame {
              */
             private void colorize(JLabel label) {
                 switch (label.getText()) {
-                    case "Online":
+                    case StaticData.SERVICE_ONLINE:
                         label.setForeground(Color.green);
                         break;
-                    case "Offline":
+                    case StaticData.SERVICE_OFFLINE:
                         label.setForeground(Color.red);
                         break;
-                    case "Alert":
+                    case StaticData.SERVICE_ALERT:
                         label.setForeground(Color.yellow);
                         break;
-                    case "Deploying":
+                    case StaticData.SERVICE_DEPLOYING:
                         label.setForeground(Color.blue);
                         break;
                     default:
@@ -698,6 +707,10 @@ public class GUI extends javax.swing.JFrame {
         }
         
         this.setIconImage(img);
+        
+        if(trayIcon != null) {
+            trayIcon.setImage(img);
+        }
     }
     
     /**
@@ -746,7 +759,7 @@ public class GUI extends javax.swing.JFrame {
      */
     private boolean checkAllOnline() {
         for(JLabel label : statusLabels) {
-            if(!label.getText().equals("Online") && !label.getText().equals(POLLING_OFF_MSG)) {
+            if(!label.getText().equals(StaticData.SERVICE_ONLINE) && !label.getText().equals(StaticData.POLLING_OFF_MSG)) {
                 return false;
             }
         }
@@ -770,14 +783,14 @@ public class GUI extends javax.swing.JFrame {
      * Set jToggleButton1's text when selected.
      */
     private void checkButtonTextOn() {
-        jToggleButton1.setText("Checking...");
+        jToggleButton1.setText(StaticData.BUTTON_POLLING_ON);
     }
         
     /**
      * Set jToggleButton1's text when not selected.
      */
     private void checkButtonTextOff() {
-        jToggleButton1.setText("Click to check");
+        jToggleButton1.setText(StaticData.BUTTON_POLLING_OFF);
     }
     
     /**
@@ -785,7 +798,7 @@ public class GUI extends javax.swing.JFrame {
      * status.
      */
     private void decolorize(JLabel label) {
-        if(label.getText().equals(POLLING_OFF_MSG)){
+        if(label.getText().equals(StaticData.POLLING_OFF_MSG)){
             label.setForeground(Color.black);
         }
     }
@@ -798,15 +811,138 @@ public class GUI extends javax.swing.JFrame {
         checkButtonTextOff();
         resetStatusLabels();
 
-        String error = "A connection to the server was unable to be made.\n\n"
-           + "Either Riot's API servers are unresponsive or your network is "
-           + "experiencing issues.  Please check your connection and try "
-           + "again by toggling the \"Click to check\" button.";
-
         //JOptionPane.showMessageDialog(new JFrame(), 
-        //    error , "Network Error", JOptionPane.ERROR_MESSAGE);
+        //    StaticData.NETWORK_ERROR_MSG , "Network Error", JOptionPane.ERROR_MESSAGE);
+        
         jTextArea1.setForeground(Color.red);
-        jTextArea1.setText(error);
+        jTextArea1.setText(StaticData.NETWORK_ERROR_MSG);
+    }
+    
+    private void minimizeToTray() {
+        if (!SystemTray.isSupported()) {
+            System.out.println("SystemTray is not supported");
+            JOptionPane.showMessageDialog(new JFrame(), 
+                "SystemTray is not supported" , "Minimize Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        this.setVisible(false);
+        
+        PopupMenu popup = new PopupMenu();
+        trayIcon = new TrayIcon(this.getIconImage());
+        final SystemTray tray = SystemTray.getSystemTray();
+        
+        // Create popup menu components
+        info = new MenuItem();
+        togglePolling = new MenuItem();
+        setVariableMenuItems();
+        info.setEnabled(false);
+        MenuItem about = new MenuItem(StaticData.MENU_ABOUT);
+        Menu setRegion = new Menu(StaticData.MENU_SET_REGION);
+        setupRegionTrayMenu(setRegion);
+        MenuItem setPolling = new MenuItem(StaticData.MENU_POLLING);
+        MenuItem maximize = new MenuItem(StaticData.MENU_MAXIMIZE);
+        MenuItem quit = new MenuItem(StaticData.MENU_EXIT);
+  
+        //Add components to popup menu
+        popup.add(info);
+        popup.add(about);
+        popup.addSeparator(); //=============
+        popup.add(togglePolling);
+        popup.addSeparator(); //=============
+        popup.add(setRegion);
+        popup.add(setPolling);
+        popup.addSeparator(); //=============
+        popup.add(maximize);
+        popup.add(quit);
+         
+        trayIcon.setPopupMenu(popup);
+        
+        try {
+            tray.add(trayIcon);
+        } catch (AWTException e) {
+            System.out.println("TrayIcon could not be added.");
+            return;
+        }
+       
+        about.addActionListener(new ActionListener() {
+        @Override
+            public void actionPerformed(ActionEvent e) {
+                displayAboutWindow();
+            }        
+        });    
+               
+        togglePolling.addActionListener(new ActionListener() {
+        @Override
+            public void actionPerformed(ActionEvent e) {
+                jToggleButton1.doClick();
+                setVariableMenuItems();
+            }        
+        });
+        
+        setPolling.addActionListener(new ActionListener() {
+        @Override
+            public void actionPerformed(ActionEvent e) {
+                displayPollingRateWindow();
+                setVariableMenuItems();
+            }        
+        });
+        
+        maximize.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                maximizeFromTray(tray, trayIcon);
+            }        
+        });
+        
+        quit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }        
+        });
+    }
+    
+    private void maximizeFromTray(SystemTray tray, TrayIcon trayIcon) {
+        this.setVisible(true);
+        tray.remove(trayIcon);
+    }
+    
+    private void setupRegionTrayMenu(final Menu setRegion) {
+        String[] regions = sdata.getRegions();
+        final MenuItem[] regionMenuItems = new MenuItem[regions.length];
+        int i = 0;
+
+        for(final String r : regions) {
+            final MenuItem currentRegion = new MenuItem(r);
+            regionMenuItems[i] = currentRegion;
+            setRegion.add(currentRegion);
+            i++;
+        }
+
+        // Add action listeners for all region menu items
+        for(int j = 0; j < regionMenuItems.length; j++) {
+            final int index = j;
+            regionMenuItems[j].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    setCurrentRegion(regionMenuItems[index].getLabel());
+                    jComboBox1.setSelectedIndex(index);
+                    setVariableMenuItems();
+                }        
+            });
+        }
+    }
+    
+    private void setVariableMenuItems() {
+        if(jToggleButton1.isSelected()) {
+            info.setLabel("[" + getCurrentRegion().toUpperCase() + "]"+ "     Refreshing every " + getPollingRate() + "s");
+            togglePolling.setLabel(StaticData.MENU_POLLING_OFF);
+        }
+        else {
+            info.setLabel("[" + getCurrentRegion().toUpperCase() + "]" + "     Not currently polling");
+            togglePolling.setLabel(StaticData.MENU_POLLING_ON);
+        }
     }
     
     /**
@@ -839,8 +975,9 @@ public class GUI extends javax.swing.JFrame {
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
-        jMenu2 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem4 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -904,12 +1041,15 @@ public class GUI extends javax.swing.JFrame {
         jMenuItem2.setText("jMenuItem2");
         jMenu1.add(jMenuItem2);
 
+        jMenuItem3.setText("jMenuItem3");
+        jMenu1.add(jMenuItem3);
+
         jMenuBar1.add(jMenu1);
 
         jMenu2.setText("Help");
 
-        jMenuItem3.setText("jMenuItem3");
-        jMenu2.add(jMenuItem3);
+        jMenuItem4.setText("jMenuItem4");
+        jMenu2.add(jMenuItem4);
 
         jMenuBar1.add(jMenu2);
 
@@ -1017,6 +1157,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JToggleButton jToggleButton1;
