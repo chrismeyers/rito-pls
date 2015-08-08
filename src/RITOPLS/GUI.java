@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -34,7 +36,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class GUI extends javax.swing.JFrame {
     private String region;
     private final Parser p;
-    private StaticData sdata;
+    private final StaticData sdata;
     private int pollingRate;
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
@@ -82,7 +84,7 @@ public class GUI extends javax.swing.JFrame {
                 populateServicesLabels();
                 
                 // Keeps jToggleButton1's text from incorrectly changing to 
-                //"Checking..."when the region is changed and jToggleButton is disabled.
+                //"Checking..." when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
                     interruptThreads();
@@ -449,8 +451,7 @@ public class GUI extends javax.swing.JFrame {
                             }
                             setFormIcon();
                         } 
-                        catch (IOException ex) {} 
-                        catch (InterruptedException ex) {}
+                        catch (IOException | InterruptedException ex) {}
 
                         try {
                             Thread.sleep(getPollingRate() * 1000);
@@ -464,7 +465,6 @@ public class GUI extends javax.swing.JFrame {
                                                     
                             p.pollTest(getPollingRate(), getCurrentRegion());
                         } catch (InterruptedException e) {
-                            //Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, e);
                             System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
                             try {
                                 setTextWhenOff();
@@ -991,7 +991,7 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
-     * Populates the system try region menu.
+     * Populates the system tray region menu.
      * 
      * @param setRegion The tray menu that contains the regions.
      */
@@ -1028,6 +1028,11 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Populates the system tray polling rate menu.
+     * 
+     * @param setRegion The tray menu that contains the polling rates. 
+     */
     private void setupPollingRateTrayMenu(final Menu setPolling) {
         String[] rates = sdata.getPollingRatesArr();
         final MenuItem[] pollingRateMenuItems = new MenuItem[rates.length];

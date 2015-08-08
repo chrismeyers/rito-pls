@@ -188,10 +188,22 @@ public class StaticData {
         return highestSeverity;
     }
     
+    /**
+     * Gets an Array of the possible polling rates.
+     * 
+     * @return An Array of polling rates.
+     */
     public String[] getPollingRatesArr() {
         return POLLING_RATES;
     }
     
+    /**
+     * Gets an ArrayList of the possible polling rates.
+     * This method is used when ArrayList methods, such as indexOf(), are
+     * needed.
+     * 
+     * @return An ArrayList of polling rates.
+     */
     public ArrayList<String> getPollingRatesArrList() {
         ArrayList<String> temp = new ArrayList();
         for(String rate : POLLING_RATES) {

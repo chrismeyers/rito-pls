@@ -20,7 +20,7 @@ import java.util.HashMap;
  */
 public class Parser {
     private String currentUrlData;
-    private String baseUrl;
+    private final String baseUrl;
     private boolean networkOK;
     
     private static boolean DEBUG = false;
@@ -219,7 +219,6 @@ public class Parser {
             networkOK = false;
             return false;
         }
-        
     }
     
     /**
@@ -231,14 +230,27 @@ public class Parser {
         return networkOK;
     }
     
+    /**
+     * Toggles the state of debug mode.
+     */
     public void toggleDebugMode() {
         DEBUG = !DEBUG;
     }
     
+    /**
+     * Gets the state of debug mode.
+     * 
+     * @return True if debug mode is enabled, false otherwise.
+     */
     public boolean getDebugStatus() {
         return DEBUG;
     }
     
+    /**
+     * Sets the JSON file to be used in debug mode.
+     * 
+     * @param fileName An absolute path to a specified debug JSON file.
+     */
     public void setDebugFile(String fileName) {
         DEBUG_FILE = fileName;
     }
