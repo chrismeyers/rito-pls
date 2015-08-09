@@ -14,8 +14,8 @@ public class StaticData {
     public static final String MENU_HELP              = "Help";
     public static final String MENU_SET_REGION        = "Set Region";
     public static final String MENU_POLLING           = "Set Polling Rate";
-    public static final String MENU_POLLING_ON        = "Start checking";
-    public static final String MENU_POLLING_OFF       = "Stop checking";
+    public static final String MENU_POLLING_ON        = "Start";
+    public static final String MENU_POLLING_OFF       = "Stop";
     public static final String MENU_MINIMIZE          = "Minimize";
     public static final String MENU_MAXIMIZE          = "Maximize";
     public static final String MENU_EXIT              = "Exit";

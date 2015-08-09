@@ -11,11 +11,15 @@ import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -940,6 +944,25 @@ public class GUI extends javax.swing.JFrame {
             return;
         }
        
+        trayIcon.addMouseListener(new MouseListener() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(e.getClickCount() >= 2) {
+                    try {
+                        // Prevents other tray icons from accidentally being clicked.
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {}
+                    
+                   maximizeFromTray(tray, trayIcon);
+                }
+            }
+            
+            @Override public void mouseClicked(MouseEvent e) {}
+            @Override public void mouseReleased(MouseEvent e) {}
+            @Override public void mouseEntered(MouseEvent e) {}
+            @Override public void mouseExited(MouseEvent e) {}
+        });
+        
         about.addActionListener(new ActionListener() {
         @Override
             public void actionPerformed(ActionEvent e) {
