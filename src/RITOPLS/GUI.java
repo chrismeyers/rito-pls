@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -933,6 +931,7 @@ public class GUI extends javax.swing.JFrame {
         popup.add(quit);
          
         trayIcon.setPopupMenu(popup);
+        trayIcon.setImageAutoSize(true);
         
         try {
             tray.add(trayIcon);
