@@ -157,6 +157,8 @@ public class Parser {
                         for(int k = 0; k < updatesArr.size(); k++) {
                             jobj = updatesArr.get(k).getAsJsonObject();
 
+                            // Add id
+                            content.put("id", formatOutput(jobj.get("id").toString()));
                             // Add severity
                             content.put("severity", formatOutput(jobj.get("severity").toString()));
                             // Add updated_at

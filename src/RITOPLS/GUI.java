@@ -18,8 +18,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -46,10 +44,10 @@ public class GUI extends javax.swing.JFrame {
     private JButton lastClicked;
     private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     private boolean regionChanged;
-    Thread pollThread, counterThread;
-    TrayIcon trayIcon;
-    MenuItem info;
-    MenuItem togglePolling;
+    private Thread pollThread, counterThread;
+    private TrayIcon trayIcon;
+    private MenuItem info;
+    private MenuItem togglePolling;
     
     /**
      * Creates new form GUI
@@ -196,11 +194,11 @@ public class GUI extends javax.swing.JFrame {
                 p.toggleDebugMode();
                 if(p.getDebugStatus()) {
                     jLabel10.setText(StaticData.DEBUGGING_ON_MSG);
-                    setTitle(false);
+                    setTitleInDebug(true);
                 }
                 else {
                     jLabel10.setText(StaticData.DEBUGGING_OFF_MSG);
-                    setTitle(true);
+                    setTitleInDebug(false);
                 }
 
                 toggleCheckButton(); // Reset polling after debug toggle.
@@ -233,16 +231,16 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
-     * Allows access to setTitle() from within the debug menuitem actionListener.
+     * Allows access to setTitle() from within actionListeners.
      * 
      * @param debugMode The current state of debugging.
      */
-    private void setTitle(boolean debugMode) {
+    private void setTitleInDebug(boolean debugMode) {
         if(debugMode) {
-            this.setTitle(StaticData.PROGRAM_TITLE);
+            this.setTitle(StaticData.DEBUG_TAG + " " + StaticData.PROGRAM_TITLE);
         }
         else {
-            this.setTitle(StaticData.DEBUG_TAG + " " + StaticData.PROGRAM_TITLE);
+            this.setTitle(StaticData.PROGRAM_TITLE);
         }
     }
     
@@ -493,13 +491,12 @@ public class GUI extends javax.swing.JFrame {
             private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
                                                     throws InterruptedException {
                 
-                String serviceString = "", status = "", severity = "", updatedTime = "", contentString = "", area = "";
+                String serviceString = "", status = "", id = "", severity = "", updatedTime = "", contentString = "", area = "";
                 ArrayList<HashMap<String, String>> currentServiceIncList;
                 HashMap<String, String> currentInc = new HashMap();
                 ArrayList<String> severities = new ArrayList<String>();
-                boolean incidentFound;
-                           
-                
+                boolean newIncidentFound;
+
                 // Set polling rate info label
                 setPollingInfoLabel();
                 
@@ -514,11 +511,12 @@ public class GUI extends javax.swing.JFrame {
                     // Handle incidents.
                     if(!statusInfo.get(serviceString).get(formatOutput(status)).isEmpty()) {
                         for (int i = 0; i < statusInfo.get(serviceString).get(formatOutput(status)).size(); i++) {
-                            incidentFound = false;
+                            newIncidentFound = true;
+                            id = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("id");
                             severity = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("severity");
                             updatedTime = formatTime(statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("updated_at"));
                             contentString = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("content");
-                            area = "[" +getCurrentRegion().toUpperCase() + " " + serviceString + "]";
+                            area = "[" + getCurrentRegion().toUpperCase() + " " + serviceString + "]";
 
                             /*
                              * If the incident list doesn't have an entry for the
@@ -533,14 +531,17 @@ public class GUI extends javax.swing.JFrame {
                             else {
                                 currentServiceIncList = allIncidents.get(serviceString);
                                 
-                                for (HashMap<String, String> c : allIncidents.get(serviceString)) {
-                                    if(c.get("contentString").equals(contentString)) {
-                                        incidentFound = true;
+                                for(HashMap<String, String> c : allIncidents.get(serviceString)) {
+                                    // Filter new incidents by "id" field.
+                                    if(c.get("id").equals(id)) {
+                                        // The "id" already exists in the HashMap.
+                                        newIncidentFound = false;
                                     }
                                 }
                             }
                             
-                            if(!incidentFound) {
+                            if(newIncidentFound) {
+                                currentInc.put("id", id);
                                 currentInc.put("area", area);
                                 currentInc.put("severity", severity);
                                 currentInc.put("updatedTime", updatedTime);
