@@ -138,6 +138,41 @@ public class StaticData {
     }
     
     /**
+     * Gets the correct array of services.
+     * 
+     * @param region The current region.
+     * @return An array of service names. 
+     */
+    protected String[] getCurrentServiceNames(String region) {
+        // NA and OCE use "Boards" service
+        if(region.equals("na") || region.equals("oce")) {
+            return getServicesB();
+        }
+        // All others use "Forums" service
+        else {
+            return getServicesF();
+        }
+    }
+    
+    /**
+     * Gets a service string from the correct array of services.
+     * 
+     * @param serv The service index
+     * @param region The current region.
+     * @return The correct service string.
+     */
+    protected String getCurrentServiceName(int serv, String region) {
+        // NA and OCE use "Boards" service
+        if(region.equals("na") || region.equals("oce")) {
+            return getServiceB(serv);
+        }
+        // All others use "Forums" service
+        else {
+            return getServiceF(serv);
+        }
+    }
+    
+    /**
      * Returns a specific region string.
      * 
      * @param index The index of the desired region string.

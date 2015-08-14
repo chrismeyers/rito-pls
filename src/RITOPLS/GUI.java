@@ -1,29 +1,25 @@
 package RITOPLS;
 
-import java.awt.AWTException;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Image;
-import java.awt.Menu;
 import java.awt.MenuItem;
-import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -35,7 +31,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  */
 public class GUI extends javax.swing.JFrame {
     private String region;
-    private final Parser p;
+    private final StatusParser p;
+    private StatusHandler h;
+    private NotificationTray n;
     private final StaticData sdata;
     private int pollingRate;
     private final JLabel[] serviceLabels;
@@ -44,13 +42,14 @@ public class GUI extends javax.swing.JFrame {
     private JButton lastClicked;
     private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     private boolean regionChanged;
-    private Thread pollThread, counterThread;
     private TrayIcon trayIcon;
     private MenuItem info;
     private MenuItem togglePolling;
+    private final SystemTray tray;
     
     /**
      * Creates new form GUI
+     * 
      * @throws java.io.IOException
      */
     public GUI() throws IOException {
@@ -71,8 +70,10 @@ public class GUI extends javax.swing.JFrame {
         
         populateServicesLabels();
         
-        p = new Parser(region);
+        p = new StatusParser(region);
+        h = null;
         setTextWhenOff(); // default state
+        tray = SystemTray.getSystemTray();
         
         // Listen for changes in region combo box state.
         jComboBox1.addActionListener(new ActionListener() {
@@ -87,7 +88,7 @@ public class GUI extends javax.swing.JFrame {
                 //"Checking..." when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
-                    interruptThreads();
+                    h.interruptThreads();
                 }
             }        
         });
@@ -111,12 +112,115 @@ public class GUI extends javax.swing.JFrame {
                     }
                 }
                 else {
-                    interruptThreads();
+                    h.interruptThreads();
                     lastClicked = null;
                 }
             }        
         });  
     }
+    
+    //========================== GLOBAL VAR GETTERS ============================
+    protected JToggleButton getJToggleButton(int which) {
+        switch(which) {
+            case 1:
+                return jToggleButton1;
+            default:
+                return null;
+        }
+    }
+    
+    protected JTextArea getJTextArea(int which) {
+        switch(which) {
+            case 1:
+                return jTextArea1;
+            default:
+                return null;
+        }
+    }
+    
+    protected JComboBox getJComboBox(int which) {
+        switch(which) {
+            case 1:
+                return jComboBox1;
+            default:
+                return null;
+        }
+    }
+    
+    protected JLabel getJLabel(int which) {
+        switch(which) {
+            case 9:
+                return jLabel9;
+            default:
+                return null;
+        }
+    }
+    
+    protected JLabel[] getStatusLabels() {
+        return statusLabels;
+    }
+    
+    protected JButton getLastClicked() {
+        return lastClicked;
+    }
+    
+    protected JButton[] getIncidentButtons() {
+        return incidentButtons;
+    }
+    
+    protected HashMap<String, ArrayList<HashMap<String, String>>> getAllIncidents() {
+        return allIncidents;
+    }
+    
+    protected StatusParser getParser() {
+        return p;
+    }
+    
+    protected StaticData getStaticData() {
+        return sdata;
+    }
+    
+    protected boolean hasRegionChanged() {
+        return regionChanged;
+    }
+    
+    protected MenuItem getInfoTrayMenuItem() {
+        return info;
+    }
+    
+    protected MenuItem getTogglePollingTrayMenuItem() {
+        return togglePolling;
+    }
+    
+    protected TrayIcon getTrayIcon() {
+        return trayIcon;
+    }
+    
+    protected SystemTray getSystemTray() {
+        return tray;
+    }
+
+    //========================== GLOBAL VAR SETTERS ============================
+    protected void setLastClicked(JButton last) {
+        lastClicked = last;
+    }
+    
+    protected void setRegionChanged(boolean change) {
+        regionChanged = change;
+    }
+    
+    protected void setTrayIcon(Image icon) {
+        trayIcon = new TrayIcon(icon); 
+    }
+    
+    protected void setInfoTrayMenuItem() {
+        info = new MenuItem();
+    }
+    
+    protected void setTogglePollingTrayMenuItem() {
+        togglePolling = new MenuItem();
+    }
+    
     
     /**
      * Populates jComboBox1 with the available regions.
@@ -125,19 +229,6 @@ public class GUI extends javax.swing.JFrame {
      */
     private void populateRegionComboBox(String[] regions) {
         jComboBox1.setModel(new DefaultComboBoxModel(regions));
-    }
-    
-    /**
-     * Interrupt all non-main threads.
-     */
-    private void interruptThreads() {
-        if(pollThread != null) {
-            pollThread.interrupt();
-        }
-        
-        if(counterThread != null) {
-            counterThread.interrupt();
-        }
     }
     
     /**
@@ -174,7 +265,9 @@ public class GUI extends javax.swing.JFrame {
         jMenuItem2.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                minimizeToTray();
+                try {
+                    minimizeToTray();
+                } catch (IOException ex) {}
             }        
         });
         
@@ -247,7 +340,7 @@ public class GUI extends javax.swing.JFrame {
     /**
      * Raises a window showing info about the program.
      */
-    private void displayAboutWindow() {
+    protected void displayAboutWindow() {
         JOptionPane.showMessageDialog(new JFrame(), 
             StaticData.ABOUT_ABOUT_MSG + StaticData.ABOUT_LEGAL_MSG,
             StaticData.ABOUT_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -257,7 +350,7 @@ public class GUI extends javax.swing.JFrame {
      * Populates and raises a window used to specify the polling rate for the
      * program.
      */
-    private void displayPollingRateWindow() {
+    protected void displayPollingRateWindow() {
         // An ArrayList is used here instead of an Array for the indexOf() method
         // in order to set the starting value in the 7th param of the JOptionPane.
         ArrayList<String> intervals = sdata.getPollingRatesArrList();
@@ -288,7 +381,7 @@ public class GUI extends javax.swing.JFrame {
      * Populates jLabel1-4 with the available services.
      */
     private void populateServicesLabels() {
-        String[] services = getCurrentServiceNames();
+        String[] services = sdata.getCurrentServiceNames(getCurrentRegion());
  
         for(int i = 0; i < serviceLabels.length; i++) {
             JLabel label = serviceLabels[i];
@@ -310,14 +403,75 @@ public class GUI extends javax.swing.JFrame {
      * 
      * @param newRegion The value currently selected in jComboBox1.
      */
-    private void setCurrentRegion(String newRegion) {
+    protected void setCurrentRegion(String newRegion) {
         region = newRegion.toLowerCase();
     }
     
     /**
-     * Set server status labels when not checking the server status.
+     * Sets the default status label values.
      */
-    private void setTextWhenOff() throws IOException {
+    private void resetStatusLabels() {
+        for (JLabel label : statusLabels) {
+            label.setText(StaticData.POLLING_OFF_MSG);
+            decolorize(label);
+        }
+        
+        // Set polling rate info label to blank when polling is off
+        jLabel9.setText(StaticData.NOT_POLLING_MSG);
+        jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
+    }
+    
+    /**
+     * Sets all incident buttons to default "off" state
+     */
+    protected void turnAllIncidentButtonsOff() {
+        for (JButton button : incidentButtons) {
+            button.setEnabled(false);
+            button.setText(StaticData.POLLING_OFF_MSG);
+            button.setBackground(null);
+        }
+    }
+    
+    /**
+     * Returns a string to be used when setting jTextArea1 based on if there
+     * are currently any incidents.
+     * 
+     * @return A string to be used to populate the default jTextArea1.
+     */
+    protected String setNewTextAreaMessage() {
+        jTextArea1.setForeground(Color.black);
+
+        if(jToggleButton1.isSelected() && !allIncidents.isEmpty()) {
+            return StaticData.INCIDENTS_AVAILABLE;
+        }       
+        
+        return StaticData.NO_INCIDENTS_AVAILABLE;
+    }
+    
+    /**
+     * Sets the rate at which the program queries the API.
+     * 
+     * @param rate The rate of checking servers (in seconds)
+     */
+    protected void setPollingRate(int rate) {
+        pollingRate = rate;
+    }
+    
+    /**
+     * Gets the rate at which the program queries the API.
+     * 
+     * @return The rate at which the program checks the servers.
+     */
+    public int getPollingRate() {
+        return pollingRate;
+    }
+    
+    /**
+     * Set server status labels when not checking the server status.
+     * 
+     * @throws java.io.IOException
+     */
+    protected void setTextWhenOff() throws IOException {
         if(p.networkCheck(getCurrentRegion())) {
             jTextArea1.setText(setNewTextAreaMessage());
         }
@@ -336,420 +490,20 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
-     * Sets the default status label values.
-     */
-    private void resetStatusLabels(){
-        for (JLabel label : statusLabels) {
-            label.setText(StaticData.POLLING_OFF_MSG);
-            decolorize(label);
-        }
-        
-        // Set polling rate info label to blank when polling is off
-        jLabel9.setText(StaticData.NOT_POLLING_MSG);
-        jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
-    }
-    
-    /**
-     * Sets all incident buttons to default "off" state
-     */
-    private void turnAllIncidentButtonsOff(){
-        for (JButton button : incidentButtons) {
-            button.setEnabled(false);
-            button.setText(StaticData.POLLING_OFF_MSG);
-            button.setBackground(null);
-        }
-    }
-    
-    /**
-     * Returns a string to be used when setting jTextArea1 based on if there
-     * are currently any incidents.
-     * 
-     * @return A string to be used to populate the default jTextArea1.
-     */
-    private String setNewTextAreaMessage() {
-        jTextArea1.setForeground(Color.black);
-
-        if(jToggleButton1.isSelected() && !allIncidents.isEmpty()) {
-            return StaticData.INCIDENTS_AVAILABLE;
-        }       
-        
-        return StaticData.NO_INCIDENTS_AVAILABLE;
-    }
-    
-    /**
-     * Sets the rate at which the program queries the API.
-     * 
-     * @param rate The rate of checking servers (in seconds)
-     */
-    private void setPollingRate(int rate) {
-        pollingRate = rate;
-    }
-    
-    /**
-     * Gets the rate at which the program queries the API.
-     * 
-     * @return The rate at which the program checks the servers.
-     */
-    public int getPollingRate() {
-        return pollingRate;
-    }
-    
-    /**
      * Adjust values of server status labels when checking is enabled.
+     * 
+     * @throws java.io.IOException
      */
-    private void setTextWhenOn() {
-        checkButtonTextOn();
-        
-        // Creates a second thread to periodically check for a change in server
-        // status.
-        Runnable poll = new Runnable() {
-            @Override
-            public void run() {
-                synchronized(p) {
-                    HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo = new HashMap();
-
-                    while(jToggleButton1.isSelected()) {
-                        try {
-                            allIncidents.clear();
-                            
-                            // Set current status for each service.
-                            try {
-                                statusInfo = p.getStatus(getCurrentRegion());
-                            }
-                            catch(UnknownHostException e) {
-                                setTextWhenOff();
-                                break;
-                            }
-                            
-                            setStatusStrings(statusInfo);
-                            
-                            /*
-                             * Case 1:
-                             *   - Set default text if incidents go away on refresh.
-                             * 
-                             * Case 2:
-                             *   - Set default text if incidents exist and jToggleButton1
-                             *     was toggled.
-                             * 
-                             * Case 3:
-                             *   - Set default text if incidents go away on refresh
-                             *     while the incidents for a selected service were being
-                             *     displayed.
-                             * 
-                             */
-                            if ((allIncidents.isEmpty())                                 // Case 1
-                                    || (!allIncidents.isEmpty() && lastClicked == null)  // Case 2
-                                    || (lastClicked != null && !lastClicked.isEnabled()) // Case 3
-                                    ) {
-                                jTextArea1.setText(setNewTextAreaMessage());
-                                lastClicked = null;
-                            }
-                            
-                            if(regionChanged) {
-                                jTextArea1.setText(setNewTextAreaMessage());
-                                regionChanged = false;
-                            }
-                            setFormIcon();
-                        } 
-                        catch (IOException | InterruptedException ex) {}
-
-                        try {
-                            Thread.sleep(getPollingRate() * 1000);
-                            allIncidents.clear();
-                            turnAllIncidentButtonsOff();
-                            
-                            if(p.networkCheck(getCurrentRegion())) {
-                                // Throws network errors (IOException from not 
-                                // being able to openStream()).
-                            }
-                                                    
-                            p.pollTest(getPollingRate(), getCurrentRegion());
-                        } catch (InterruptedException e) {
-                            System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
-                            try {
-                                setTextWhenOff();
-                            } catch (IOException ex) {}
-                            
-                            if(jToggleButton1.isSelected()) {
-                                checkButtonTextOn();
-                            }
-                            setFormIcon();
-                        } catch (IOException ex) {
-                            // Catches network errors from not being able to openStream().
-                            System.out.println(ex);
-                            networkErrorFound();
-                        }
-                    }
-                }
-            }
-            
-            /**
-             * Set status strings on GUI and handles incidents.
-             * 
-             * @param statusInfo All parsed information.
-             */
-            private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
-                                                    throws InterruptedException {
-                
-                String serviceString = "", status = "", id = "", severity = "", updatedTime = "", contentString = "", area = "";
-                ArrayList<HashMap<String, String>> currentServiceIncList;
-                HashMap<String, String> currentInc = new HashMap();
-                ArrayList<String> severities = new ArrayList<String>();
-                boolean newIncidentFound;
-
-                // Set polling rate info label
-                setPollingInfoLabel();
-                
-                // Set status labels, color these labels and handle incidents.
-                for(int service = 0; service < statusLabels.length; service++) {
-                    serviceString = getCurrentServiceName(service);
-                    status = statusInfo.get(serviceString).keySet().toString();
-                
-                    statusLabels[service].setText(formatOutput(status));
-                    colorize(statusLabels[service]);
-                    
-                    // Handle incidents.
-                    if(!statusInfo.get(serviceString).get(formatOutput(status)).isEmpty()) {
-                        for (int i = 0; i < statusInfo.get(serviceString).get(formatOutput(status)).size(); i++) {
-                            newIncidentFound = true;
-                            id = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("id");
-                            severity = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("severity");
-                            updatedTime = formatTime(statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("updated_at"));
-                            contentString = statusInfo.get(serviceString).get(formatOutput(status)).get(i).get(serviceString).get("content");
-                            area = "[" + getCurrentRegion().toUpperCase() + " " + serviceString + "]";
-
-                            /*
-                             * If the incident list doesn't have an entry for the
-                             * current service, make a new ArrayList and add the
-                             * incident to that.  Otherwise, use the ArrayList
-                             * that already exists and append the new incident to
-                             * it.  Add the ArrayList to the incident HashMap.
-                             */
-                            if(allIncidents.get(serviceString) == null) {
-                                currentServiceIncList = new ArrayList<HashMap<String, String>>();
-                            }
-                            else {
-                                currentServiceIncList = allIncidents.get(serviceString);
-                                
-                                for(HashMap<String, String> c : allIncidents.get(serviceString)) {
-                                    // Filter new incidents by "id" field.
-                                    if(c.get("id").equals(id)) {
-                                        // The "id" already exists in the HashMap.
-                                        newIncidentFound = false;
-                                    }
-                                }
-                            }
-                            
-                            if(newIncidentFound) {
-                                currentInc.put("id", id);
-                                currentInc.put("area", area);
-                                currentInc.put("severity", severity);
-                                currentInc.put("updatedTime", updatedTime);
-                                currentInc.put("contentString", contentString);
-                            
-                                currentServiceIncList.add((HashMap)currentInc.clone());
-                                currentInc.clear();
-                                allIncidents.put(serviceString, currentServiceIncList);
-                            }
-                            
-                            severities.add(severity);
-                            populateIncidentBox(service, serviceString);
-                            
-                            System.out.println(area + " :: " + severity + " :: "+ updatedTime + " :: " + contentString);
-                        }
-                        populateIncidentButton(service, severities);
-                        severities.clear();
-                    }
-                }
-            }  
-            
-            /**
-             * Updates incident buttons based on severity.
-             * 
-             * @param service The current service that has an incident.
-             * @param severity The severity of the current incident.
-             */
-            private void populateIncidentButton(int service, ArrayList<String> severities) {
-                
-                final JButton button = incidentButtons[service];
-                button.setEnabled(true);
-
-                String severity = sdata.determineMostSevere(severities);
-                
-                switch(severity) {
-                    case StaticData.INFO_STRING:
-                        button.setForeground(Color.white);
-                        button.setBackground(Color.black);
-                        button.setText(StaticData.INFO_SYMBOL);
-                        break;
-                        
-                    case StaticData.WARN_STRING:
-                        button.setForeground(Color.white);
-                        button.setBackground(Color.black);
-                        button.setText(StaticData.WARN_SYMBOL);
-                        break;
-                        
-                    case StaticData.ALERT_STRING:
-                        button.setForeground(Color.white);
-                        button.setBackground(Color.black);
-                        button.setText(StaticData.ALERT_SYMBOL);
-                        break;
-                        
-                    case StaticData.ERROR_STRING:
-                        button.setForeground(Color.white);
-                        button.setBackground(Color.black);
-                        button.setText(StaticData.ERROR_SYMBOL);
-                        break;
-                        
-                    default:
-                        button.setForeground(Color.magenta);
-                        button.setBackground(Color.black);
-                        button.setText(StaticData.WTF_SYMBOL);
-                        break;
-                }
-            }
-            
-            /**
-             * Updates the incident output box (jTextArea1).
-             * 
-             * @param service The current service that has an incident.
-             * @param serviceString A string of the incident.
-             */
-            private void populateIncidentBox(int service, String serviceString) {
-                final JButton button = incidentButtons[service];
-                button.setEnabled(true);
-                
-                final String currentService = serviceString;
-                
-                if(lastClicked == button) {
-                    handleTextArea(currentService);
-                }
-                
-                button.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        handleTextArea(currentService);
-                        lastClicked = button;
-                    }
-                });
-            }
-            
-            /**
-             * Prints data to jTextArea1.
-             * 
-             * @param currentService The current service to output.
-             */
-            private void handleTextArea(String currentService) {
-                jTextArea1.setForeground(Color.black);
-                jTextArea1.setText("");
-                for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
-                    jTextArea1.append(allIncidents.get(currentService).get(i).get("area") + " :: ");
-                    jTextArea1.append(allIncidents.get(currentService).get(i).get("severity") + " :: ");
-                    jTextArea1.append(allIncidents.get(currentService).get(i).get("updatedTime") + " :: ");
-                    jTextArea1.append(allIncidents.get(currentService).get(i).get("contentString"));
-
-                    if(i != allIncidents.get(currentService).size()-1) {
-                        jTextArea1.append("\n\n");
-                    }
-
-                    // "Scroll" to top of jTextBox1
-                    jTextArea1.setCaretPosition(0);
-                }
-            }
-
-            /**
-             * Sets the value of the polling info label (jLabel9) based on the 
-             * current polling rate.
-             */
-            private void setPollingInfoLabel() throws InterruptedException {
-                Runnable countdown = new Runnable() {
-                    @Override
-                    public void run() {
-                        for(int i = getPollingRate(); i > -1; i--) {
-                            if(jToggleButton1.isSelected()) {
-                                if(i == 1) {
-                                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " second...");
-                                }
-                                else {
-                                    jLabel9.setText("Refreshing " + getCurrentRegion().toUpperCase() + " in " + i + " seconds...");
-                                }
-                                jLabel9.setHorizontalAlignment(SwingConstants.CENTER);
-
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException ex) {
-                                    System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                };
-                
-                counterThread = new Thread(countdown, "Counter Thread");
-                counterThread.start();
-            }
-            
-            /**
-             * Removes brackets from the status obtained in the HashMap keySet.
-             * 
-             * @param raw The raw status string that was parsed.
-             * @return A formatted status string.
-             */
-            private String formatOutput(String raw) {
-                // Remove brackets
-                String formatted = raw.replaceAll("[\\[\\]]", "");
-
-                return formatted;
-            }
-            
-            /**
-             * Converts an incident's updated time to a more readable form.
-             * 
-             * @param raw The raw updated time as received from the API.
-             * @return A more readable timestamp.
-             */
-            private String formatTime(String raw) {
-                String date = raw.substring(0, raw.indexOf("T"));
-                String time = raw.substring(raw.indexOf("T") + 1, raw.indexOf(".")) + " GMT";
-                
-                return date + " @ " + time; 
-            }
-            
-            /**
-             * Change the color of service status labels based on current state
-             * of server.
-             */
-            private void colorize(JLabel label) {
-                switch (label.getText()) {
-                    case StaticData.SERVICE_ONLINE:
-                        label.setForeground(Color.green);
-                        break;
-                    case StaticData.SERVICE_OFFLINE:
-                        label.setForeground(Color.red);
-                        break;
-                    case StaticData.SERVICE_ALERT:
-                        label.setForeground(Color.yellow);
-                        break;
-                    case StaticData.SERVICE_DEPLOYING:
-                        label.setForeground(Color.blue);
-                        break;
-                    default:
-                        label.setForeground(Color.magenta);
-                        break;
-                }
-            }
-        };
-
-        pollThread = new Thread(poll, "Poll Thread");
-        pollThread.start();
+    private void setTextWhenOn() throws IOException {
+        h = new StatusHandler(this);
+        h.setTextWhenOn();
     }
     
     /**
      * Sets the GUI form icon based on the status of services for the current
      * region.
      */
-    private void setFormIcon() {
+    protected void setFormIcon() {
         Image img;
         
         if(!jToggleButton1.isSelected()) {
@@ -774,53 +528,14 @@ public class GUI extends javax.swing.JFrame {
         this.setIconImage(img);
         
         if(trayIcon != null) {
-            trayIcon.setImage(img);
+            getTrayIcon().setImage(img);
         }
-    }
-    
-    /**
-     * Gets the correct array of services.
-     * 
-     * @return An array of service names. 
-     */
-    private String[] getCurrentServiceNames() {
-        String[] services;
-        // NA and OCE use "Boards" service
-        if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
-            services = sdata.getServicesB();
-        }
-        // All others use "Forums" service
-        else {
-            services = sdata.getServicesF();
-        }
-
-        return services;
-    }
-    
-    /**
-     * Gets a service string from the correct array of services.
-     * 
-     * @param serv The service index
-     * @return The correct service string.
-     */
-    private String getCurrentServiceName(int serv) {
-        String service;
-        // NA and OCE use "Boards" service
-        if(getCurrentRegion().equals("na") || getCurrentRegion().equals("oce")) {
-            service = sdata.getServiceB(serv);
-        }
-        // All others use "Forums" service
-        else {
-            service = sdata.getServiceF(serv);
-        }
-
-        return service;
     }
     
     /**
      * Checks to see if all services are online.
      * 
-     * @return False if one at least one service is offline. 
+     * @return True if all services are online, false otherwise. 
      */
     private boolean checkAllOnline() {
         for(JLabel label : statusLabels) {
@@ -832,9 +547,9 @@ public class GUI extends javax.swing.JFrame {
     }
 
     /**
-     * Checks to see if all services are online.
+     * Checks to see if there are any incidents for any service.
      * 
-     * @return True if there is at least one incident. 
+     * @return True if there is at least one incident, false otherwise. 
      */
     private boolean checkForAnIncident() {
         if(!allIncidents.isEmpty()) {
@@ -847,7 +562,7 @@ public class GUI extends javax.swing.JFrame {
     /**
      * Set jToggleButton1's text when selected.
      */
-    private void checkButtonTextOn() {
+    protected void checkButtonTextOn() {
         jToggleButton1.setText(StaticData.BUTTON_POLLING_ON);
     }
         
@@ -861,7 +576,7 @@ public class GUI extends javax.swing.JFrame {
     /**
      * Toggles check button when changing to and from debug mode, and vice-versa.
      */
-    private void toggleCheckButton() {
+    protected void toggleCheckButton() {
         if(jToggleButton1.isSelected()) {
             jToggleButton1.doClick(); // Toggle off
             jToggleButton1.doClick(); // Toggle on
@@ -869,8 +584,36 @@ public class GUI extends javax.swing.JFrame {
     }
     
     /**
+    * Change the color of service status labels based on current state
+    * of server.
+    * 
+    * @param label The label to colorize.
+    */
+   protected void colorize(JLabel label) {
+       switch (label.getText()) {
+           case StaticData.SERVICE_ONLINE:
+               label.setForeground(Color.green);
+               break;
+           case StaticData.SERVICE_OFFLINE:
+               label.setForeground(Color.red);
+               break;
+           case StaticData.SERVICE_ALERT:
+               label.setForeground(Color.yellow);
+               break;
+           case StaticData.SERVICE_DEPLOYING:
+               label.setForeground(Color.blue);
+               break;
+           default:
+               label.setForeground(Color.magenta);
+               break;
+       }
+   }
+    
+    /**
      * Reset the server status labels to black when the program is not checking
      * status.
+     * 
+     * @param label The label to decolorize. 
      */
     private void decolorize(JLabel label) {
         if(label.getText().equals(StaticData.POLLING_OFF_MSG)){
@@ -881,7 +624,7 @@ public class GUI extends javax.swing.JFrame {
     /**
      * Displays a message in jTextBox1 if there is a network error.
      */
-    private void networkErrorFound() {
+    protected void networkErrorFound() {
         jToggleButton1.setSelected(false);
         checkButtonTextOff();
         resetStatusLabels();
@@ -895,213 +638,14 @@ public class GUI extends javax.swing.JFrame {
     
     /**
      * Minimizes the GUI to an icon on the notification area.
-     */
-    private void minimizeToTray() {
-        if (!SystemTray.isSupported()) {
-            System.out.println("SystemTray is not supported");
-            JOptionPane.showMessageDialog(new JFrame(), 
-                "SystemTray is not supported" , "Minimize Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        this.setVisible(false);
-        
-        PopupMenu popup = new PopupMenu();
-        trayIcon = new TrayIcon(this.getIconImage());
-        final SystemTray tray = SystemTray.getSystemTray();
-        
-        // Create popup menu components
-        info = new MenuItem();
-        togglePolling = new MenuItem();
-        setVariableMenuItems();
-        info.setEnabled(false);
-        MenuItem about = new MenuItem(StaticData.MENU_ABOUT);
-        Menu setRegion = new Menu(StaticData.MENU_SET_REGION);
-        setupRegionTrayMenu(setRegion);
-        Menu setPolling = new Menu(StaticData.MENU_POLLING);
-        setupPollingRateTrayMenu(setPolling);
-        MenuItem maximize = new MenuItem(StaticData.MENU_MAXIMIZE);
-        MenuItem quit = new MenuItem(StaticData.MENU_EXIT);
-  
-        //Add components to popup menu
-        popup.add(info);
-        popup.add(about);
-        popup.addSeparator(); //=============
-        popup.add(togglePolling);
-        popup.addSeparator(); //=============
-        popup.add(setRegion);
-        popup.add(setPolling);
-        popup.addSeparator(); //=============
-        popup.add(maximize);
-        popup.add(quit);
-         
-        trayIcon.setPopupMenu(popup);
-        trayIcon.setImageAutoSize(true);
-        
-        try {
-            tray.add(trayIcon);
-        } catch (AWTException e) {
-            System.out.println("TrayIcon could not be added.");
-            return;
-        }
-       
-        trayIcon.addMouseListener(new MouseListener() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if(e.getClickCount() >= 2) {
-                    try {
-                        // Prevents other tray icons from accidentally being clicked.
-                        Thread.sleep(100);
-                    } catch (InterruptedException ex) {}
-                    
-                   maximizeFromTray(tray, trayIcon);
-                }
-            }
-            
-            @Override public void mouseClicked(MouseEvent e) {}
-            @Override public void mouseReleased(MouseEvent e) {}
-            @Override public void mouseEntered(MouseEvent e) {}
-            @Override public void mouseExited(MouseEvent e) {}
-        });
-        
-        about.addActionListener(new ActionListener() {
-        @Override
-            public void actionPerformed(ActionEvent e) {
-                displayAboutWindow();
-            }        
-        });    
-               
-        togglePolling.addActionListener(new ActionListener() {
-        @Override
-            public void actionPerformed(ActionEvent e) {
-                jToggleButton1.doClick();
-                setVariableMenuItems();
-            }        
-        });
-        
-        setPolling.addActionListener(new ActionListener() {
-        @Override
-            public void actionPerformed(ActionEvent e) {
-                displayPollingRateWindow();
-                setVariableMenuItems();
-            }        
-        });
-        
-        maximize.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                maximizeFromTray(tray, trayIcon);
-            }        
-        });
-        
-        quit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }        
-        });
-    }
-    
-    /**
-     * Restores the GUI from the notification area and cleans up icon.
      * 
-     * @param tray The current system tray icon.
-     * @param trayIcon The current system tray icon.
+     * @throws java.io.IOException
      */
-    private void maximizeFromTray(SystemTray tray, TrayIcon trayIcon) {
-        this.setVisible(true);
-        tray.remove(trayIcon);
+    private void minimizeToTray() throws IOException {
+        n = new NotificationTray(this);
+        n.minimizeToTray();
     }
-    
-    /**
-     * Populates the system tray region menu.
-     * 
-     * @param setRegion The tray menu that contains the regions.
-     */
-    private void setupRegionTrayMenu(final Menu setRegion) {
-        String[] regions = sdata.getRegions();
-        final MenuItem[] regionMenuItems = new MenuItem[regions.length];
-        int i = 0;
 
-        for(final String r : regions) {
-            final MenuItem currentRegion = new MenuItem(r);
-            regionMenuItems[i] = currentRegion;
-            setRegion.add(currentRegion);
-            if(r.toLowerCase().equals(getCurrentRegion())) {
-                currentRegion.setFont(new Font("default", Font.BOLD, 12));
-            }
-            i++;
-        }
-
-        // Add action listeners for all region menu items
-        for(int j = 0; j < regionMenuItems.length; j++) {
-            final int index = j;
-            regionMenuItems[j].addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    for(MenuItem mi : regionMenuItems) {
-                        mi.setFont(new Font("default", Font.PLAIN, 12));
-                    }
-                    setCurrentRegion(regionMenuItems[index].getLabel());
-                    regionMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
-                    jComboBox1.setSelectedIndex(index);
-                    setVariableMenuItems();
-                }        
-            });
-        }
-    }
-    
-    /**
-     * Populates the system tray polling rate menu.
-     * 
-     * @param setRegion The tray menu that contains the polling rates. 
-     */
-    private void setupPollingRateTrayMenu(final Menu setPolling) {
-        String[] rates = sdata.getPollingRatesArr();
-        final MenuItem[] pollingRateMenuItems = new MenuItem[rates.length];
-        int i = 0;
-
-        for(final String r : rates) {
-            final MenuItem currentRate = new MenuItem(r);
-            pollingRateMenuItems[i] = currentRate;
-            setPolling.add(currentRate);
-            if(Integer.parseInt(r) == getPollingRate()) {
-                currentRate.setFont(new Font("default", Font.BOLD, 12));
-            }
-            i++;
-        }
-
-        // Add action listeners for all region menu items
-        for(int j = 0; j < pollingRateMenuItems.length; j++) {
-            final int index = j;
-            pollingRateMenuItems[j].addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    for(MenuItem mi : pollingRateMenuItems) {
-                        mi.setFont(new Font("default", Font.PLAIN, 12));
-                    }
-                    setPollingRate(Integer.parseInt(pollingRateMenuItems[index].getLabel()));
-                    pollingRateMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
-                    setVariableMenuItems();
-                }        
-            });
-        }
-    }
-    
-    /**
-     * Populates tray menu items that periodically change.
-     */
-    private void setVariableMenuItems() {
-        if(jToggleButton1.isSelected()) {
-            info.setLabel("[" + getCurrentRegion().toUpperCase() + "] :: " + "Refreshing every " + getPollingRate() + "s");
-            togglePolling.setLabel(StaticData.MENU_POLLING_OFF);
-        }
-        else {
-            info.setLabel("[" + getCurrentRegion().toUpperCase() + "] :: " + "Not currently polling");
-            togglePolling.setLabel(StaticData.MENU_POLLING_ON);
-        }
-    }
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

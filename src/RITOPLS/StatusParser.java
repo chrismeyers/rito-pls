@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -18,7 +19,7 @@ import java.util.HashMap;
  * 
  * @author Chris Meyers
  */
-public class Parser {
+public class StatusParser {
     private String currentUrlData;
     private final String baseUrl;
     private boolean networkOK;
@@ -32,7 +33,7 @@ public class Parser {
      * @param region The region selected by the user.
      * @throws IOException 
      */
-    public Parser(String region) throws IOException {
+    public StatusParser(String region) throws IOException {
         baseUrl = "http://status.leagueoflegends.com/shards/";
         String currentUrlString = buildUrl(region);
         try {
@@ -173,6 +174,7 @@ public class Parser {
                 }
             }
             
+            Collections.reverse(services); // Flip incidents ArrayList to have the newest first.
             statusValues.put(status, (ArrayList)services.clone());
             services.clear(); // Make sure old incidents aren't copied if current service has no incidents.
             statusInfo.put(service, (HashMap)statusValues.clone());
