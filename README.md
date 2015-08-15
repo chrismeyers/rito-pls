@@ -3,11 +3,8 @@ rito-pls [ree-toe please] is a Java application that reports current *League of 
 
 The purpose of this project was to get more practice with Java GUI building and multithreaded programming.  The polling operation takes place on a new thread that allows for the program to function normally while maintaining periodic server checks.
 
-<p align="center">
 <img src="http://i.imgur.com/kdXiIhb.png" alt="Current GUIt" width="335px" height="358px">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <img src="http://i.imgur.com/fAcPYfP.png" alt="Current GUI">
-</p>
 
 ## Usage
 
