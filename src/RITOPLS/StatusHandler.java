@@ -221,32 +221,27 @@ public class StatusHandler {
 
         switch(severity) {
             case StaticData.INFO_STRING:
-                button.setForeground(Color.white);
-                button.setBackground(Color.black);
+                button.setForeground(Color.black);
                 button.setText(StaticData.INFO_SYMBOL);
                 break;
 
             case StaticData.WARN_STRING:
-                button.setForeground(Color.white);
-                button.setBackground(Color.black);
+                button.setForeground(Color.black);
                 button.setText(StaticData.WARN_SYMBOL);
                 break;
 
             case StaticData.ALERT_STRING:
-                button.setForeground(Color.white);
-                button.setBackground(Color.black);
+                button.setForeground(Color.black);
                 button.setText(StaticData.ALERT_SYMBOL);
                 break;
 
             case StaticData.ERROR_STRING:
-                button.setForeground(Color.white);
-                button.setBackground(Color.black);
+                button.setForeground(Color.black);
                 button.setText(StaticData.ERROR_SYMBOL);
                 break;
 
             default:
-                button.setForeground(Color.magenta);
-                button.setBackground(Color.black);
+                button.setForeground(Color.black);
                 button.setText(StaticData.WTF_SYMBOL);
                 break;
         }
