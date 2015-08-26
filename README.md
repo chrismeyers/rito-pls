@@ -11,8 +11,9 @@ The purpose of this project was to get more practice with Java GUI building and 
 ### Get the program running
 1. Clone this git repository or download as .zip.
 2. Choose a .jar file to run:
-  * `dist/rito-pls.jar` can be used as long as the .jar is always run in the dist directory and the dist directory remains unchanged.
-  * A more portable standalone version of the .jar can be found in `store/rito-pls.jar`.  This method is preferred because all external resources and libraries are packaged into one file.
+  * `dist/rito-pls.jar` - generated from eclipse.
+  * `store/rito-pls.jar` - generated from netbeans.
+  * Both are identical standalone executable .jars and can be run in any directory.
 4. Run the selected .jar by either:
   * Double clicking the selected .jar file.
     * If double clicking doesn't work, the following program works well to fix the .jar file association:       http://johann.loefflmann.net/en/software/jarfix/index.html
