@@ -70,8 +70,8 @@ public class StatusParser {
             while ((read = reader.read(chars)) != -1) {
                 buffer.append(chars, 0, read); 
             }
-            
-            return buffer.toString();
+
+            return buffer.toString().replace("\\r\\n", "");
         } 
         finally {
             if (reader != null) {

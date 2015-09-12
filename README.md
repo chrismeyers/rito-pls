@@ -10,20 +10,16 @@ The purpose of this project was to get more practice with Java GUI building and 
 
 ### Get the program running
 1. Clone this git repository or download as .zip.
-2. Choose a .jar file to run:
-  * `dist/rito-pls.jar` - generated from eclipse.
-  * `store/rito-pls.jar` - generated from netbeans.
-  * Both are identical standalone executable .jars and can be run in any directory.
-4. Run the selected .jar by either:
-  * Double clicking the selected .jar file.
+2. Run the .jar `dist/rito-pls.jar` by:
+  * Double clicking the .jar file.
     * If double clicking doesn't work, the following program works well to fix the .jar file association:       http://johann.loefflmann.net/en/software/jarfix/index.html
-  * Running the following command from the command line:
+  * or, running the following command from the command line:
     * `java -jar "X:/PATH/TO/JAR/rito-pls.jar"`
 
 ### Using the program
 1. (Optional) Select a polling rate from `File > Set Polling Rate`.
   * This determines how often the program queries the servers.
-  * Default is 5 seconds.
+  * Default is 10 seconds.
 2. Select a region from the dropdown menu.
 3. Press "Click to Check" button to begin querying.
 4. If incidents exist, click the button next to the status to see the related incident(s).
