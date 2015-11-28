@@ -146,7 +146,7 @@ public class StatusHandler {
 
         // Set status labels, color these labels and handle incidents.
         for(int service = 0; service < gui.getStatusLabels().length; service++) {
-            serviceString = sdata.getCurrentServiceName(service, gui.getCurrentRegion());
+            serviceString = sdata.getCurrentServiceName(service);
             status = statusInfo.get(serviceString).keySet().toString();
 
             gui.getStatusLabels()[service].setText(formatOutput(status));

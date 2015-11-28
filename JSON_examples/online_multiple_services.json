@@ -8,8 +8,8 @@
    "region_tag":"la1",
    "services":[  
       {  
-         "name":"Forums",
-         "slug":"forums",
+         "name":"Client",
+         "slug":"client",
          "status":"online",
          "incidents":[  
 

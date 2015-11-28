@@ -12,8 +12,8 @@
    "region_tag":"eu",
    "services":[  
       {  
-         "name":"Forums",
-         "slug":"forums",
+         "name":"Client",
+         "slug":"client",
          "status":"online",
          "incidents":[  
 
@@ -86,7 +86,7 @@
                         },
                         {  
                            "locale":"fr_FR",
-                           "content":"Nous avons temporairement désactivé Caitlyn en raison d'un bug rencontré dans le jeu. Nous travaillons actuellement �  résoudre ce problème.",
+                           "content":"Nous avons temporairement désactivé Caitlyn en raison d'un bug rencontré dans le jeu. Nous travaillons actuellement �  résoudre ce problème.",
                            "updated_at":"2015-06-12T03:40:18.000Z"
                         },
                         {  
@@ -123,12 +123,12 @@
                         },
                         {  
                            "locale":"fr_FR",
-                           "content":"Une maintenance démarre �  5:00 et la plateforme sera fermée.  Nous allons désactiver les files classées �  3:30.",
+                           "content":"Une maintenance démarre �  5:00 et la plateforme sera fermée.  Nous allons désactiver les files classées �  3:30.",
                            "updated_at":"2015-06-15T16:12:18.000Z"
                         },
                         {  
                            "locale":"it_IT",
-                           "content":"I lavori di manutenzione inizieranno alle 5:00 e la piattaforma di gioco sar�  chiusa. Disattiveremo le code classificate alle 3:30.",
+                           "content":"I lavori di manutenzione inizieranno alle 5:00 e la piattaforma di gioco sar�  chiusa. Disattiveremo le code classificate alle 3:30.",
                            "updated_at":"2015-06-15T16:12:50.000Z"
                         }
                      ]

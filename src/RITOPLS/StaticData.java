@@ -67,8 +67,7 @@ public class StaticData {
                                                         + "experiencing issues.  Please check your connection and try "
                                                         + "again by toggling the \"Click to check\" button.";
     
-    private String[] servicesB                        = {"Boards", "Game", "Store", "Website"};
-    private String[] servicesF                        = {"Forums", "Game", "Store", "Website"};
+    private String[] services                         = {"Client", "Game", "Store", "Website"};
     private String[] regions                          = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE"};
     
     private static final int INFO_PRECEDENCE          = 1;
@@ -82,24 +81,6 @@ public class StaticData {
     }
     
     /**
-     * Gets the array of available services for regions that use "Boards".
-     * 
-     * @return An array of available services.
-     */
-    public String[] getServicesB() {
-        return servicesB;
-    }
-    
-    /**
-     * Gets the array of available services for regions that use "Forums".
-     * 
-     * @return An array of available services.
-     */
-    public String[] getServicesF() {
-        return servicesF;
-    }
-    
-    /**
      * Gets the array of available regions.
      * 
      * @return An array of available regions.
@@ -109,67 +90,23 @@ public class StaticData {
     }
     
     /**
-     * Gets the the number of regions.
-     * 
-     * @return The size of the regions array.
-     */
-    public int getNumberRegions() {
-        return regions.length;
-    }
-    
-    /**
-     * Returns a specific service string for regions that use "Forums".
-     * 
-     * @param index The index of the desired service string.
-     * @return The desired service string.
-     */
-    public String getServiceF(int index) {
-        return servicesF[index];
-    }
-    
-    /**
-     * Returns a specific service string  for regions that use "Boards".
-     * 
-     * @param index The index of the desired service string.
-     * @return The desired service string.
-     */
-    public String getServiceB(int index) {
-        return servicesB[index];
-    }
-    
-    /**
      * Gets the correct array of services.
      * 
      * @param region The current region.
      * @return An array of service names. 
      */
     protected String[] getCurrentServiceNames(String region) {
-        // NA and OCE use "Boards" service
-        if(region.equals("na") || region.equals("oce")) {
-            return getServicesB();
-        }
-        // All others use "Forums" service
-        else {
-            return getServicesF();
-        }
+        return services;
     }
     
     /**
      * Gets a service string from the correct array of services.
      * 
      * @param serv The service index
-     * @param region The current region.
      * @return The correct service string.
      */
-    protected String getCurrentServiceName(int serv, String region) {
-        // NA and OCE use "Boards" service
-        if(region.equals("na") || region.equals("oce")) {
-            return getServiceB(serv);
-        }
-        // All others use "Forums" service
-        else {
-            return getServiceF(serv);
-        }
+    protected String getCurrentServiceName(int serv) {
+        return services[serv];
     }
     
     /**

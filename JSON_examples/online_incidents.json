@@ -8,8 +8,8 @@
    "region_tag":"na1",
    "services":[  
       {  
-         "name":"Boards",
-         "slug":"boards",
+         "name":"Client",
+         "slug":"client",
          "status":"online",
          "incidents":[  
 
