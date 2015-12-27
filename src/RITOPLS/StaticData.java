@@ -54,7 +54,7 @@ public class StaticData {
                                                         + "rito-pls is a java application that reports the current League\n"
                                                         + "of Legends service statuses for a specified region.  The\n"
                                                         + "application queries the League of Legends API periodically and\n"
-                                                        + "presents the current status of several services (Boards, Game,\n"
+                                                        + "presents the current status of several services (Client, Game,\n"
                                                         + "Store and Website).\n\n";
     public static final String ABOUT_LEGAL_MSG        = "riot-pls isn’t endorsed by Riot Games and doesn’t reflect the\n"
                                                         + "views or opinions of Riot Games or anyone officially involved\n"

@@ -196,7 +196,7 @@ public class NotificationTray {
         int i = 0;
 
         for(final String r : rates) {
-            final MenuItem currentRate = new MenuItem(r);
+            final MenuItem currentRate = new MenuItem(r + "s");
             pollingRateMenuItems[i] = currentRate;
             setPolling.add(currentRate);
             if(Integer.parseInt(r) == gui.getPollingRate()) {
@@ -214,7 +214,7 @@ public class NotificationTray {
                     for(MenuItem mi : pollingRateMenuItems) {
                         mi.setFont(new Font("default", Font.PLAIN, 12));
                     }
-                    gui.setPollingRate(Integer.parseInt(pollingRateMenuItems[index].getLabel()));
+                    gui.setPollingRate(sanitizePollingRate(pollingRateMenuItems[index].getLabel()));
                     pollingRateMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
                     setVariableMenuItems();
                 }        
@@ -234,5 +234,17 @@ public class NotificationTray {
             gui.getInfoTrayMenuItem().setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Not currently polling");
             gui.getTogglePollingTrayMenuItem().setLabel(StaticData.MENU_POLLING_ON);
         }
+    }
+    
+    /**
+     * Takes the "s" off the polling rate menu selection and returns the 
+     * selected string as an int.
+     * 
+     * @param menuSelection The time interval selected in the notification tray menu.
+     * @return A sanitized polling rate integer.
+     */
+    private int sanitizePollingRate(String menuSelection) {
+        String timeStr = menuSelection.substring(0, menuSelection.indexOf("s"));
+        return Integer.parseInt(timeStr);
     }
 }
