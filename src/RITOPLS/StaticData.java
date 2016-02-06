@@ -68,7 +68,7 @@ public class StaticData {
                                                         + "again by toggling the \"Click to check\" button.";
     
     private String[] services                         = {"Client", "Game", "Store", "Website"};
-    private String[] regions                          = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE"};
+    private String[] regions                          = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE", "JP"};
     
     private static final int INFO_PRECEDENCE          = 1;
     private static final int WARN_PRECEDENCE          = 1;
