@@ -5,3 +5,5 @@
 .project
 .settings/
 src/.DS_Store
+nbproject/
+.metadata/
