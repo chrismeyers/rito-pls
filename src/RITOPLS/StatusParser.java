@@ -23,6 +23,7 @@ public class StatusParser {
     private String currentUrlData;
     private final String baseUrl;
     private boolean networkOK;
+    String ping;
     
     private static boolean DEBUG = false;
     private static String DEBUG_FILE = "F:\\Development\\League of Legends\\rito-pls\\JSON_examples\\offline.json";
@@ -35,6 +36,7 @@ public class StatusParser {
      */
     public StatusParser(String region) throws IOException {
         baseUrl = "http://status.leagueoflegends.com/shards/";
+        
         String currentUrlString = buildUrl(region);
         try {
             currentUrlData = getUrlData(currentUrlString);
@@ -44,6 +46,8 @@ public class StatusParser {
             currentUrlData = "";
             networkOK = false;
         }
+        
+        ping = "";
     }
     
     /**
@@ -257,5 +261,50 @@ public class StatusParser {
      */
     public void setDebugFile(String fileName) {
         DEBUG_FILE = fileName;
+    }
+    
+    /**
+     * Pings the IP of the current region.
+     * 
+     * @param ip the IP to check
+     * @return the ping value.
+     */
+    public String determinePing(String ip) {
+        if(ip.isEmpty()) {
+            System.out.println("PING NOT AVAILABLE");
+            return "Not Available";
+        }
+        
+        String command = "ping " + ip;
+
+        try{
+            Process proc = Runtime.getRuntime().exec(command);
+            BufferedReader input = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String line;
+            while((line = input.readLine()) != null) {
+                if(line.length() > 0 && line.contains("time")) {
+                    System.out.println(line);
+                    input.close();
+                    String timeString = line.substring(line.indexOf("time"));
+                    String time = timeString.substring(timeString.indexOf("=") + 1);
+                    ping = time;
+                    return time;
+                }
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+        }
+
+        return "SERVERS ON FIRE";
+    }
+    
+    /**
+     * Gets the last known ping value.
+     * 
+     * @return the last known ping value. 
+     */
+    public String getPing() {
+        return ping;
     }
 }

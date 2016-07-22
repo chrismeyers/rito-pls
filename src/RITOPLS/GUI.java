@@ -10,7 +10,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -31,19 +30,19 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  */
 public class GUI extends javax.swing.JFrame {
     private String region;
-    private final StatusParser p;
-    private StatusHandler h;
-    private NotificationTray n;
+    private final StatusParser parser;
+    private StatusHandler handler;
+    private NotificationTray notif;
     private final StaticData sdata;
     private int pollingRate;
     private final JLabel[] serviceLabels;
     private final JLabel[] statusLabels;
     private final JButton[] incidentButtons;
     private JButton lastClicked;
-    private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     private boolean regionChanged;
     private TrayIcon trayIcon;
     private MenuItem info;
+    private MenuItem notifPing;
     private MenuItem togglePolling;
     private final SystemTray tray;
     
@@ -55,11 +54,11 @@ public class GUI extends javax.swing.JFrame {
     public GUI() throws IOException {
         initComponents();
         sdata = new StaticData();
-        allIncidents = new HashMap();
         regionChanged = true;
         serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
         statusLabels = new JLabel[]{jLabel5, jLabel6, jLabel7, jLabel8};
         incidentButtons = new JButton[]{jButton1, jButton2, jButton3, jButton4};
+        
         
         setupMenus();
         setPollingRate(StaticData.DEFAULT_POLLING_RATE);
@@ -70,10 +69,12 @@ public class GUI extends javax.swing.JFrame {
         
         populateServicesLabels();
         
-        p = new StatusParser(region);
-        h = null;
+        parser = new StatusParser(region);
+        handler = null;
         setTextWhenOff(); // default state
         tray = SystemTray.getSystemTray();
+        
+        clearPingLabels();
         
         // Listen for changes in region combo box state.
         jComboBox1.addActionListener(new ActionListener() {
@@ -88,7 +89,7 @@ public class GUI extends javax.swing.JFrame {
                 //"Checking..." when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
-                    h.interruptThreads();
+                    handler.interruptThreads();
                 }
             }        
         });
@@ -99,7 +100,7 @@ public class GUI extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 if(jToggleButton1.isSelected()) {
                     try {
-                        if(p.networkCheck(getCurrentRegion())) {
+                        if(parser.networkCheck(getCurrentRegion())) {
                             // Throws network errors (IOException from not 
                             // being able to openStream()).
                             setTextWhenOn();
@@ -112,14 +113,14 @@ public class GUI extends javax.swing.JFrame {
                     }
                 }
                 else {
-                    h.interruptThreads();
+                    handler.interruptThreads();
                     lastClicked = null;
                 }
             }        
         });  
     }
     
-    //========================== GLOBAL VAR GETTERS ============================
+    //========================== GLOBAL GETTERS ============================
     protected JToggleButton getJToggleButton(int which) {
         switch(which) {
             case 1:
@@ -151,6 +152,8 @@ public class GUI extends javax.swing.JFrame {
         switch(which) {
             case 9:
                 return jLabel9;
+            case 12:
+                return jLabel12;
             default:
                 return null;
         }
@@ -168,16 +171,16 @@ public class GUI extends javax.swing.JFrame {
         return incidentButtons;
     }
     
-    protected HashMap<String, ArrayList<HashMap<String, String>>> getAllIncidents() {
-        return allIncidents;
-    }
-    
     protected StatusParser getParser() {
-        return p;
+        return parser;
     }
     
     protected StaticData getStaticData() {
         return sdata;
+    }
+    
+    protected NotificationTray getNotifTray() {
+        return notif;
     }
     
     protected boolean hasRegionChanged() {
@@ -188,10 +191,14 @@ public class GUI extends javax.swing.JFrame {
         return info;
     }
     
+    protected MenuItem getPingTrayMenuItem() {
+        return notifPing;
+    }
+    
     protected MenuItem getTogglePollingTrayMenuItem() {
         return togglePolling;
     }
-    
+        
     protected TrayIcon getTrayIcon() {
         return trayIcon;
     }
@@ -200,7 +207,7 @@ public class GUI extends javax.swing.JFrame {
         return tray;
     }
 
-    //========================== GLOBAL VAR SETTERS ============================
+    //========================== GLOBAL SETTERS ============================
     protected void setLastClicked(JButton last) {
         lastClicked = last;
     }
@@ -217,6 +224,10 @@ public class GUI extends javax.swing.JFrame {
         info = new MenuItem();
     }
     
+    protected void setPingTrayMenuItem() {
+        notifPing = new MenuItem();
+    }
+        
     protected void setTogglePollingTrayMenuItem() {
         togglePolling = new MenuItem();
     }
@@ -284,8 +295,8 @@ public class GUI extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 turnAllIncidentButtonsOff();
-                p.toggleDebugMode();
-                if(p.getDebugStatus()) {
+                parser.toggleDebugMode();
+                if(parser.getDebugStatus()) {
                     jLabel10.setText(StaticData.DEBUGGING_ON_MSG);
                     setTitleInDebug(true);
                 }
@@ -308,7 +319,7 @@ public class GUI extends javax.swing.JFrame {
                 int file = fileChooser.showOpenDialog(null);
                 if(file == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
-                    p.setDebugFile(selectedFile.getAbsolutePath());
+                    parser.setDebugFile(selectedFile.getAbsolutePath());
                     toggleCheckButton(); // Reset polling for new debug file.
                 }
             }
@@ -441,7 +452,7 @@ public class GUI extends javax.swing.JFrame {
     protected String setNewTextAreaMessage() {
         jTextArea1.setForeground(Color.black);
 
-        if(jToggleButton1.isSelected() && !allIncidents.isEmpty()) {
+        if(jToggleButton1.isSelected() && !handler.getAllIncidents().isEmpty()) {
             return StaticData.INCIDENTS_AVAILABLE;
         }       
         
@@ -472,7 +483,7 @@ public class GUI extends javax.swing.JFrame {
      * @throws java.io.IOException
      */
     protected void setTextWhenOff() throws IOException {
-        if(p.networkCheck(getCurrentRegion())) {
+        if(parser.networkCheck(getCurrentRegion())) {
             jTextArea1.setText(setNewTextAreaMessage());
         }
         else {
@@ -482,6 +493,7 @@ public class GUI extends javax.swing.JFrame {
         checkButtonTextOff();
         resetStatusLabels();
         turnAllIncidentButtonsOff();
+        clearPingLabels();
 
         // Setup incident textbox.
         jTextArea1.setEditable(false);
@@ -495,8 +507,8 @@ public class GUI extends javax.swing.JFrame {
      * @throws java.io.IOException
      */
     private void setTextWhenOn() throws IOException {
-        h = new StatusHandler(this);
-        h.setTextWhenOn();
+        handler = new StatusHandler(this);
+        handler.setTextWhenOn();
     }
     
     /**
@@ -552,7 +564,7 @@ public class GUI extends javax.swing.JFrame {
      * @return True if there is at least one incident, false otherwise. 
      */
     private boolean checkForAnIncident() {
-        if(!allIncidents.isEmpty()) {
+        if(!handler.getAllIncidents().isEmpty()) {
             return true;
         }
         
@@ -598,7 +610,7 @@ public class GUI extends javax.swing.JFrame {
                label.setForeground(Color.red);
                break;
            case StaticData.SERVICE_ALERT:
-               label.setForeground(Color.yellow);
+               label.setForeground(Color.orange);
                break;
            case StaticData.SERVICE_DEPLOYING:
                label.setForeground(Color.blue);
@@ -642,8 +654,42 @@ public class GUI extends javax.swing.JFrame {
      * @throws java.io.IOException
      */
     private void minimizeToTray() throws IOException {
-        n = new NotificationTray(this);
-        n.minimizeToTray();
+        notif = new NotificationTray(this);
+        notif.minimizeToTray();
+    }
+    
+    /**
+     * Sets ping labels to "Off" state.
+     */
+    private void clearPingLabels() {
+        jLabel11.setText("");
+        jLabel12.setText("");
+    }
+    
+    /**
+     * Sets the ping label value for the current region.
+     */
+    protected void setPingValue() {
+        String ping = parser.determinePing(sdata.getRegionIp(getCurrentRegion()));
+        double pingValue = 999.99;
+        try {
+            pingValue = Double.parseDouble(ping.substring(0, ping.indexOf("ms")).trim());
+        }
+        catch(StringIndexOutOfBoundsException ex){
+        }
+        
+        jLabel11.setText(getCurrentRegion().toUpperCase() + " ping is ");
+        jLabel12.setText(ping);
+        
+        if(pingValue > 0 && pingValue < 50) {
+            jLabel12.setForeground(Color.green);
+        }
+        else if(pingValue > 50 && pingValue < 150) {
+            jLabel12.setForeground(Color.orange);
+        }
+        else {
+            jLabel12.setForeground(Color.red);
+        }
     }
 
     /**
@@ -673,6 +719,8 @@ public class GUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -742,6 +790,10 @@ public class GUI extends javax.swing.JFrame {
         jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel10.setText("jLabel10");
         jLabel10.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+
+        jLabel11.setText("jLabel11");
+
+        jLabel12.setText("jLabel12");
 
         jMenu1.setText("jMenu1");
 
@@ -820,7 +872,12 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(jLabel9))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(135, 135, 135)
-                        .addComponent(jLabel10)))
+                        .addComponent(jLabel10))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(140, 140, 140)
+                        .addComponent(jLabel11)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel12)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -854,8 +911,12 @@ public class GUI extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel11)
+                    .addComponent(jLabel12))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
 
         pack();
@@ -878,6 +939,8 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

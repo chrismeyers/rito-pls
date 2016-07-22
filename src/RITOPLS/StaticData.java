@@ -1,6 +1,7 @@
 package RITOPLS;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This class stores the static values needed to populate fields in the GUI.
@@ -76,8 +77,12 @@ public class StaticData {
     private static final int ERROR_PRECEDENCE         = 3;
     
     private static final String[] POLLING_RATES       = {"1", "5", "10", "30", "45", "60"};
+    
+    private HashMap<String, String> regionIpAddresses;
 
     public StaticData() {
+        regionIpAddresses = new HashMap<String, String>();
+        setIpAddresses();
     }
     
     /**
@@ -182,5 +187,33 @@ public class StaticData {
             temp.add(rate);
         }
         return temp;
+    }
+    
+    /**
+     * Initializes a HashMap of Region-IP pairs.
+     */
+    private void setIpAddresses() {
+        regionIpAddresses.put("NA", "104.160.131.3");
+        regionIpAddresses.put("EUW", "104.160.141.3");
+        regionIpAddresses.put("EUNE", "104.160.142.3");
+        regionIpAddresses.put("OCE", "104.160.156.1");
+        regionIpAddresses.put("LAN", "104.160.136.3");
+    }
+    
+    /**
+     * Gets the IP address for the specified region.
+     * 
+     * @param region the specified region
+     * @return the IP address for the given region
+     */
+    public String getRegionIp(String reg) {
+        String region = reg.toUpperCase();
+        
+        if(regionIpAddresses.containsKey(region)) {
+            return regionIpAddresses.get(region);
+        }
+        else {
+            return "";
+        }
     }
 }

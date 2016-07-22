@@ -3,7 +3,9 @@ package RITOPLS;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,8 +19,10 @@ import javax.swing.SwingConstants;
  */
 public class StatusHandler {
     private final GUI gui;
+    private final StatusParser parser;
     private final StaticData sdata;
     private Thread pollThread, counterThread;
+    private final HashMap<String, ArrayList<HashMap<String, String>>> allIncidents;
     
     /**
      * StatusHandler constructor.
@@ -28,7 +32,9 @@ public class StatusHandler {
      */
     public StatusHandler(GUI g) throws IOException {
         gui = g;
+        parser = gui.getParser();
         sdata = gui.getStaticData();
+        allIncidents = new HashMap();
     }
     
     /**
@@ -47,7 +53,9 @@ public class StatusHandler {
 
                     while(gui.getJToggleButton(1).isSelected()) {
                         try {
-                            gui.getAllIncidents().clear();
+                            gui.getParser().pollTest(gui.getPollingRate(), gui.getCurrentRegion());
+                            
+                            allIncidents.clear();
                             
                             // Set current status for each service.
                             try {
@@ -74,10 +82,10 @@ public class StatusHandler {
                              *     displayed.
                              * 
                              */
-                            if ((gui.getAllIncidents().isEmpty())                                          // Case 1
-                                    || (!gui.getAllIncidents().isEmpty() && gui.getLastClicked() == null)  // Case 2
-                                    || (gui.getLastClicked() != null && !gui.getLastClicked().isEnabled()) // Case 3
-                                    ) {
+                            if ((allIncidents.isEmpty()) ||                                            // Case 1
+                                (!allIncidents.isEmpty() && gui.getLastClicked() == null) ||           // Case 2
+                                (gui.getLastClicked() != null && !gui.getLastClicked().isEnabled())) { // Case 3
+                                
                                 gui.getJTextArea(1).setText(gui.setNewTextAreaMessage());
                                 gui.setLastClicked(null);
                             }
@@ -86,21 +94,26 @@ public class StatusHandler {
                                 gui.getJTextArea(1).setText(gui.setNewTextAreaMessage());
                                 gui.setRegionChanged(false);
                             }
+                            
                             gui.setFormIcon();
+                            gui.setPingValue();
+                            if(gui.getNotifTray() != null) {
+                                gui.getNotifTray().setVariableMenuItems();
+                            }
                         } 
                         catch (IOException | InterruptedException ex) {}
 
+                        System.out.println();
+                                                    
                         try {
                             Thread.sleep(gui.getPollingRate() * 1000);
-                            gui.getAllIncidents().clear();
+                            allIncidents.clear();
                             gui.turnAllIncidentButtonsOff();
                             
                             if(gui.getParser().networkCheck(gui.getCurrentRegion())) {
                                 // Throws network errors (IOException from not 
                                 // being able to openStream()).
                             }
-                                                    
-                            gui.getParser().pollTest(gui.getPollingRate(), gui.getCurrentRegion());
                         } catch (InterruptedException e) {
                             System.out.println("**************THREAD \"" + Thread.currentThread().getName() + "\" HAS BEEN INTERRUPTED**************");
                             try {
@@ -116,7 +129,7 @@ public class StatusHandler {
                             System.out.println(ex);
                             gui.networkErrorFound();
                         }
-                        
+                       
                     }
                 }
             }        
@@ -169,13 +182,13 @@ public class StatusHandler {
                      * that already exists and append the new incident to
                      * it.  Add the ArrayList to the incident HashMap.
                      */
-                    if(gui.getAllIncidents().get(serviceString) == null) {
+                    if(allIncidents.get(serviceString) == null) {
                         currentServiceIncList = new ArrayList<HashMap<String, String>>();
                     }
                     else {
-                        currentServiceIncList = gui.getAllIncidents().get(serviceString);
+                        currentServiceIncList = allIncidents.get(serviceString);
 
-                        for(HashMap<String, String> c : gui.getAllIncidents().get(serviceString)) {
+                        for(HashMap<String, String> c : allIncidents.get(serviceString)) {
                             // Filter new incidents by "id" field.
                             if(c.get("id").equals(id)) {
                                 // The "id" already exists in the HashMap.
@@ -193,7 +206,7 @@ public class StatusHandler {
 
                         currentServiceIncList.add((HashMap)currentInc.clone());
                         currentInc.clear();
-                        gui.getAllIncidents().put(serviceString, currentServiceIncList);
+                        allIncidents.put(serviceString, currentServiceIncList);
                     }
 
                     severities.add(severity);
@@ -280,13 +293,13 @@ public class StatusHandler {
     private void handleTextArea(String currentService) {
         gui.getJTextArea(1).setForeground(Color.black);
         gui.getJTextArea(1).setText("");
-        for(int i = 0; i < gui.getAllIncidents().get(currentService).size(); i++) {
-            gui.getJTextArea(1).append(gui.getAllIncidents().get(currentService).get(i).get("area") + " :: ");
-            gui.getJTextArea(1).append(gui.getAllIncidents().get(currentService).get(i).get("severity") + " :: ");
-            gui.getJTextArea(1).append(gui.getAllIncidents().get(currentService).get(i).get("updatedTime") + " :: ");
-            gui.getJTextArea(1).append(gui.getAllIncidents().get(currentService).get(i).get("contentString"));
+        for(int i = 0; i < allIncidents.get(currentService).size(); i++) {
+            gui.getJTextArea(1).append(allIncidents.get(currentService).get(i).get("area") + " :: ");
+            gui.getJTextArea(1).append(allIncidents.get(currentService).get(i).get("severity") + " :: ");
+            gui.getJTextArea(1).append(allIncidents.get(currentService).get(i).get("updatedTime") + " :: ");
+            gui.getJTextArea(1).append(allIncidents.get(currentService).get(i).get("contentString"));
 
-            if(i != gui.getAllIncidents().get(currentService).size()-1) {
+            if(i != allIncidents.get(currentService).size()-1) {
                 gui.getJTextArea(1).append("\n\n");
             }
 
@@ -369,5 +382,13 @@ public class StatusHandler {
         }
     }
     
+    /**
+     * Gets an incident map for the current region.
+     * 
+     * @return HashMap of incidents for current region.
+     */
+    protected HashMap<String, ArrayList<HashMap<String, String>>> getAllIncidents() {
+        return allIncidents;
+    }
     
 }

@@ -1,20 +1,20 @@
 # rito-pls
-rito-pls [ree-toe please] is a Java application that reports current *League of Legends* service statuses for a specified region.  The application queries the *League of Legends* API periodically and presents the current status of several services (Boards/Forums, Game, Store and Website).
+rito-pls [ree-toe please] is a Java application that reports current *League of Legends* service statuses for a specified region.  The application queries the *League of Legends* API periodically and presents the current status of several services (Client, Game, Store and Website).
 
 The purpose of this project was to get more practice with Java GUI building and multithreaded programming.  The polling operation takes place on a new thread that allows for the program to function normally while maintaining periodic server checks.
 
-<img src="http://i.imgur.com/kdXiIhb.png" alt="Current GUIt" width="335px" height="358px">
-<img src="http://i.imgur.com/fAcPYfP.png" alt="Current GUI">
+<img src="http://i.imgur.com/kdXiIhb.png" alt="GUI" width="335px" height="358px">
+<img src="http://i.imgur.com/fAcPYfP.png" alt="Notification area">
 
 ## Usage
 
 ### Get the program running
-1. Clone this git repository or download as .zip.
-2. Run the .jar `dist/rito-pls.jar` by:
+1. Clone this git repository, download as .zip, or download latest release.
+2. Run the .jar `store/rito-pls.jar` by:
   * Double clicking the .jar file.
     * If double clicking doesn't work, the following program works well to fix the .jar file association:       http://johann.loefflmann.net/en/software/jarfix/index.html
   * or, running the following command from the command line:
-    * `java -jar "X:/PATH/TO/JAR/rito-pls.jar"`
+    * `java -jar "/PATH/TO/JAR/rito-pls.jar"`
 
 ### Using the program
 1. (Optional) Select a polling rate from `File > Set Polling Rate`.

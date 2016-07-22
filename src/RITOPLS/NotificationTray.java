@@ -50,9 +50,11 @@ public class NotificationTray {
 
         // Create popup menu components
         gui.setInfoTrayMenuItem();
+        gui.setPingTrayMenuItem();
         gui.setTogglePollingTrayMenuItem();
         setVariableMenuItems();
         gui.getInfoTrayMenuItem().setEnabled(false);
+        gui.getPingTrayMenuItem().setEnabled(false);
         MenuItem about = new MenuItem(StaticData.MENU_ABOUT);
         Menu setRegion = new Menu(StaticData.MENU_SET_REGION);
         setupRegionTrayMenu(setRegion);
@@ -63,6 +65,7 @@ public class NotificationTray {
   
         //Add components to popup menu
         popup.add(gui.getInfoTrayMenuItem());
+        popup.add(gui.getPingTrayMenuItem());
         popup.add(about);
         popup.addSeparator(); //=============
         popup.add(gui.getTogglePollingTrayMenuItem());
@@ -86,6 +89,8 @@ public class NotificationTray {
         gui.getTrayIcon().addMouseListener(new MouseListener() {
             @Override
             public void mousePressed(MouseEvent e) {
+                setVariableMenuItems();
+                
                 if(e.getClickCount() >= 2) {
                     try {
                         // Prevents other tray icons from accidentally being clicked.
@@ -225,13 +230,15 @@ public class NotificationTray {
     /**
      * Populates tray menu items that periodically change.
      */
-    private void setVariableMenuItems() {
+    protected void setVariableMenuItems() {
         if(gui.getJToggleButton(1).isSelected()) {
             gui.getInfoTrayMenuItem().setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Refreshing every " + gui.getPollingRate() + "s");
+            gui.getPingTrayMenuItem().setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + gui.getParser().getPing());
             gui.getTogglePollingTrayMenuItem().setLabel(StaticData.MENU_POLLING_OFF);
         }
         else {
             gui.getInfoTrayMenuItem().setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Not currently polling");
+            gui.getPingTrayMenuItem().setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + "Not Available");
             gui.getTogglePollingTrayMenuItem().setLabel(StaticData.MENU_POLLING_ON);
         }
     }
