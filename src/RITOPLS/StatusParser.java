@@ -286,7 +286,7 @@ public class StatusParser {
                     System.out.println(line);
                     input.close();
                     String timeString = line.substring(line.indexOf("time"));
-                    String time = timeString.substring(timeString.indexOf("=") + 1);
+                    String time = timeString.substring(timeString.indexOf("=") + 1, timeString.indexOf("ms") + 2);
                     ping = time;
                     return time;
                 }
