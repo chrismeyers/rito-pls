@@ -52,7 +52,7 @@ public class NotificationTray {
         gui.setInfoTrayMenuItem();
         gui.setPingTrayMenuItem();
         gui.setTogglePollingTrayMenuItem();
-        setVariableMenuItems();
+        setVariableMenuItems(-1);
         gui.getInfoTrayMenuItem().setEnabled(false);
         gui.getPingTrayMenuItem().setEnabled(false);
         MenuItem about = new MenuItem(StaticData.MENU_ABOUT);
@@ -89,7 +89,7 @@ public class NotificationTray {
         gui.getTrayIcon().addMouseListener(new MouseListener() {
             @Override
             public void mousePressed(MouseEvent e) {
-                setVariableMenuItems();
+                setVariableMenuItems(-1);
                 
                 if(e.getClickCount() >= 2) {
                     try {
@@ -118,14 +118,14 @@ public class NotificationTray {
         @Override
             public void actionPerformed(ActionEvent e) {
                 gui.getJToggleButton(1).doClick();
-                setVariableMenuItems();
+                setVariableMenuItems(-1);
             }        
         });
         
         setPolling.addActionListener(new ActionListener() {
         @Override
             public void actionPerformed(ActionEvent e) {
-                setVariableMenuItems();
+                setVariableMenuItems(-1);
             }        
         });
         
@@ -184,7 +184,7 @@ public class NotificationTray {
                     gui.setCurrentRegion(regionMenuItems[index].getLabel());
                     regionMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
                     gui.getJComboBox(1).setSelectedIndex(index);
-                    setVariableMenuItems();
+                    setVariableMenuItems(-1);
                 }        
             });
         }
@@ -221,7 +221,7 @@ public class NotificationTray {
                     }
                     gui.setPollingRate(sanitizePollingRate(pollingRateMenuItems[index].getLabel()));
                     pollingRateMenuItems[index].setFont(new Font("default", Font.BOLD, 12));
-                    setVariableMenuItems();
+                    setVariableMenuItems(-1);
                 }        
             });
         }
@@ -229,10 +229,14 @@ public class NotificationTray {
     
     /**
      * Populates tray menu items that periodically change.
+     * 
+     * @param refresh the time until the next refresh.
      */
-    protected void setVariableMenuItems() {
+    protected void setVariableMenuItems(int refresh) {
         if(gui.getJToggleButton(1).isSelected()) {
-            gui.getInfoTrayMenuItem().setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Refreshing every " + gui.getPollingRate() + "s");
+            if(refresh != -1) {
+                gui.getInfoTrayMenuItem().setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Refreshing in " + refresh + "s");
+            }
             gui.getPingTrayMenuItem().setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + gui.getParser().getPing());
             gui.getTogglePollingTrayMenuItem().setLabel(StaticData.MENU_POLLING_OFF);
         }
