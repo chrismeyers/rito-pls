@@ -53,6 +53,7 @@ public class GUI extends javax.swing.JFrame {
      */
     public GUI() throws IOException {
         initComponents();
+        getContentPane().setBackground(new java.awt.Color(153, 153, 153));
         sdata = new StaticData();
         regionChanged = true;
         serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
