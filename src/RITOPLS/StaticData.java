@@ -1,5 +1,6 @@
 package RITOPLS;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -49,6 +50,10 @@ public class StaticData {
     public static final String ALERT_SYMBOL           = "! !";
     public static final String ERROR_SYMBOL           = "! ! !";
     public static final String WTF_SYMBOL             = "?";
+    
+    public static final Color GREEN                   = new Color(43, 215, 28);
+    public static final Color YELLOW                  = new Color(204, 179, 39);
+    public static final Color RED                     = new Color(207, 37, 46);
     
     public static final String ABOUT_TITLE            = "About";
     public static final String ABOUT_ABOUT_MSG        = "Developed by: Chris Meyers || http://chrismeyers.info\n\n"

@@ -282,7 +282,7 @@ public class StatusParser {
             BufferedReader input = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             String line;
             while((line = input.readLine()) != null) {
-                if(line.length() > 0 && line.contains("time")) {
+                if(line.length() > 0 && line.contains("time=")) {
                     System.out.println(line);
                     input.close();
                     String timeString = line.substring(line.indexOf("time"));

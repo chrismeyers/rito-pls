@@ -53,7 +53,6 @@ public class GUI extends javax.swing.JFrame {
      */
     public GUI() throws IOException {
         initComponents();
-        getContentPane().setBackground(new java.awt.Color(153, 153, 153));
         sdata = new StaticData();
         regionChanged = true;
         serviceLabels = new JLabel[]{jLabel1, jLabel2, jLabel3, jLabel4};
@@ -605,13 +604,13 @@ public class GUI extends javax.swing.JFrame {
    protected void colorize(JLabel label) {
        switch (label.getText()) {
            case StaticData.SERVICE_ONLINE:
-               label.setForeground(Color.green);
+               label.setForeground(sdata.GREEN);
                break;
            case StaticData.SERVICE_OFFLINE:
-               label.setForeground(Color.red);
+               label.setForeground(sdata.RED);
                break;
            case StaticData.SERVICE_ALERT:
-               label.setForeground(Color.orange);
+               label.setForeground(sdata.YELLOW);
                break;
            case StaticData.SERVICE_DEPLOYING:
                label.setForeground(Color.blue);
@@ -645,7 +644,7 @@ public class GUI extends javax.swing.JFrame {
         //JOptionPane.showMessageDialog(new JFrame(), 
         //    StaticData.NETWORK_ERROR_MSG , "Network Error", JOptionPane.ERROR_MESSAGE);
         
-        jTextArea1.setForeground(Color.red);
+        jTextArea1.setForeground(sdata.RED);
         jTextArea1.setText(StaticData.NETWORK_ERROR_MSG);
     }
     
@@ -683,13 +682,13 @@ public class GUI extends javax.swing.JFrame {
         jLabel12.setText(ping);
         
         if(pingValue > 0 && pingValue < 50) {
-            jLabel12.setForeground(Color.green);
+            jLabel12.setForeground(sdata.GREEN);
         }
         else if(pingValue > 50 && pingValue < 150) {
-            jLabel12.setForeground(Color.orange);
+            jLabel12.setForeground(sdata.YELLOW);
         }
         else {
-            jLabel12.setForeground(Color.red);
+            jLabel12.setForeground(sdata.RED);
         }
     }
 
