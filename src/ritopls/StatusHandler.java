@@ -91,9 +91,10 @@ public class StatusHandler {
                             
                             gui.setFormIcon();
                             gui.setPingValue();
-                            //if(gui.getNotifTray() != null) {
-                            //    gui.getNotifTray().setVariableMenuItems(-1);
-                            //}
+                            if(gui.getNotifTray() != null) {
+                                //gui.getNotifTray().setVariableMenuItems(-1);
+                                gui.getNotifTray().getTrayIcon().setToolTip(gui.getCurrentRegion().toUpperCase() + " ping is " + gui.getParser().getPing());
+                            }
                         } 
                         catch (IOException | InterruptedException ex) {}
 
