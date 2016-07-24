@@ -91,9 +91,9 @@ public class StatusHandler {
                             
                             gui.setFormIcon();
                             gui.setPingValue();
-                            if(gui.getNotifTray() != null) {
-                                gui.getNotifTray().setVariableMenuItems(-1);
-                            }
+                            //if(gui.getNotifTray() != null) {
+                            //    gui.getNotifTray().setVariableMenuItems(-1);
+                            //}
                         } 
                         catch (IOException | InterruptedException ex) {}
 
@@ -320,9 +320,9 @@ public class StatusHandler {
                         }
                         gui.getJLabel(9).setHorizontalAlignment(SwingConstants.CENTER);
                         
-                        if(gui.getNotifTray() != null) {
-                            gui.getNotifTray().setVariableMenuItems(i);
-                        }
+                        //if(gui.getNotifTray() != null) {
+                        //    gui.getNotifTray().setVariableMenuItems(i);
+                        //}
  
                         try {
                             Thread.sleep(1000);

@@ -22,12 +22,21 @@ import javax.swing.JOptionPane;
  * @author Chris Meyers
  */
 public class NotificationTray {
+    // TODO: implement a ping JMenuItem when JTrayIcon supports JPopupMenus.
+    // ping and update should update to refelect their current values.  These
+    // calls are within the StatusHandler Runnables.
+    
     private final GUI gui;
-    private final MenuItem update;
-    private final MenuItem ping;
-    private final MenuItem polling;
     private TrayIcon trayIcon;
-    private final SystemTray tray;
+    private final PopupMenu popup;
+    private final MenuItem update;
+    //private final MenuItem ping;
+    private final MenuItem about;
+    private final MenuItem polling;
+    private final Menu setRegion;
+    private final Menu setPolling;
+    private final MenuItem maximize;
+    private final MenuItem exit;
     
     /**
      * NotificationTray constructor.
@@ -37,10 +46,19 @@ public class NotificationTray {
      */
     public NotificationTray(GUI g) throws IOException {
         gui = g;
+        popup = new PopupMenu();
+        
         update = new MenuItem();
-        ping = new MenuItem();
+        //ping = new MenuItem();
+        about = new MenuItem(StaticData.MENU_ABOUT);
+        //=============
         polling = new MenuItem();
-        tray = SystemTray.getSystemTray();
+        //=============
+        setRegion = new Menu(StaticData.MENU_SET_REGION);
+        setPolling = new Menu(StaticData.MENU_POLLING);
+        //=============
+        maximize = new MenuItem(StaticData.MENU_MAXIMIZE);
+        exit = new MenuItem(StaticData.MENU_EXIT);
     }
     
     /**
@@ -55,26 +73,18 @@ public class NotificationTray {
         }
         
         gui.setVisible(false);
-        
-        PopupMenu popup = new PopupMenu();
-        //trayIcon.setTrayIcon(gui.getIconImage());
         gui.setFormIcon();
 
-        // Create popup menu components
+        // Set popup menu components
         setVariableMenuItems(-1);
         update.setEnabled(false);
-        ping.setEnabled(false);
-        MenuItem about = new MenuItem(StaticData.MENU_ABOUT);
-        Menu setRegion = new Menu(StaticData.MENU_SET_REGION);
+        //ping.setEnabled(false);
         setupRegionTrayMenu(setRegion);
-        Menu setPolling = new Menu(StaticData.MENU_POLLING);
         setupPollingRateTrayMenu(setPolling);
-        MenuItem maximize = new MenuItem(StaticData.MENU_MAXIMIZE);
-        MenuItem quit = new MenuItem(StaticData.MENU_EXIT);
   
         //Add components to popup menu
         popup.add(update);
-        popup.add(ping);
+        //popup.add(ping);
         popup.add(about);
         popup.addSeparator(); //=============
         popup.add(polling);
@@ -83,13 +93,13 @@ public class NotificationTray {
         popup.add(setPolling);
         popup.addSeparator(); //=============
         popup.add(maximize);
-        popup.add(quit);
+        popup.add(exit);
          
         trayIcon.setPopupMenu(popup);
         trayIcon.setImageAutoSize(true);
         
         try {
-            tray.add(trayIcon);
+            SystemTray.getSystemTray().add(trayIcon);
         } catch (AWTException e) {
             System.out.println("TrayIcon could not be added.");
             return;
@@ -145,7 +155,7 @@ public class NotificationTray {
             }        
         });
         
-        quit.addActionListener(new ActionListener() {
+        exit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
@@ -158,7 +168,7 @@ public class NotificationTray {
      */
     private void maximizeFromTray() {
         gui.setVisible(true);
-        tray.remove(trayIcon);
+        SystemTray.getSystemTray().remove(trayIcon);
     }
     
     /**
@@ -243,15 +253,13 @@ public class NotificationTray {
      */
     protected void setVariableMenuItems(int refresh) {
         if(gui.getJToggleButton(1).isSelected()) {
-            if(refresh != -1) {
-                update.setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Refreshing in " + refresh + "s");
-            }
-            ping.setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + gui.getParser().getPing());
+            update.setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Refreshing every " + gui.getPollingRate() + "s");
+            //ping.setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + gui.getParser().getPing());
             polling.setLabel(StaticData.MENU_POLLING_OFF);
         }
         else {
             update.setLabel("[" + gui.getCurrentRegion().toUpperCase() + "] :: " + "Not currently polling");
-            ping.setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + "Not Available");
+            //ping.setLabel(gui.getCurrentRegion().toUpperCase() + " ping is " + "Not Available");
             polling.setLabel(StaticData.MENU_POLLING_ON);
         }
     }
