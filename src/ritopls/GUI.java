@@ -75,7 +75,7 @@ public class GUI extends javax.swing.JFrame {
                 populateServicesLabels();
                 
                 // Keeps jToggleButton1's text from incorrectly changing to 
-                //"Checking..." when the region is changed and jToggleButton is disabled.
+                // "Checking..." when the region is changed and jToggleButton is disabled.
                 if(jToggleButton1.isSelected()) { 
                     regionChanged = true;
                     handler.interruptThreads();
@@ -110,6 +110,12 @@ public class GUI extends javax.swing.JFrame {
     }
     
     //========================== GLOBAL GETTERS ============================
+    /**
+     * Gets a specified JToggleButton.
+     * 
+     * @param which the JToggleButton to get
+     * @return the specified JToggleButton
+     */
     protected JToggleButton getJToggleButton(int which) {
         switch(which) {
             case 1:
@@ -119,6 +125,12 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Gets a specified JTextArea.
+     * 
+     * @param which the JTextArea to get
+     * @return the specified JTextArea
+     */
     protected JTextArea getJTextArea(int which) {
         switch(which) {
             case 1:
@@ -128,6 +140,12 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Gets a specified JComboBox.
+     * 
+     * @param which the JComboBox to get
+     * @return the specified JComboBox
+     */
     protected JComboBox getJComboBox(int which) {
         switch(which) {
             case 1:
@@ -136,7 +154,13 @@ public class GUI extends javax.swing.JFrame {
                 return null;
         }
     }
-    
+
+    /**
+     * Gets a specified JLabel.
+     * 
+     * @param which the JLabel to get
+     * @return the specified JLabel
+     */
     protected JLabel getJLabel(int which) {
         switch(which) {
             case 9:
@@ -148,35 +172,75 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Gets the array of status JLabel's.
+     * 
+     * @return  the array of status JLabel's
+     */
     protected JLabel[] getStatusLabels() {
         return statusLabels;
     }
-    
+
+    /**
+     * Gets the last JButton that was pressed.
+     * 
+     * @return  the last JButton that was pressed
+     */
     protected JButton getLastClicked() {
         return lastClicked;
     }
-    
+ 
+    /**
+     * Gets the array of incident JButtons's.
+     * 
+     * @return  the array of incident JButtons's
+     */    
     protected JButton[] getIncidentButtons() {
         return incidentButtons;
     }
     
+    /**
+     * Gets the StatusParser object.
+     * 
+     * @return the StatusParser object
+     */
     protected StatusParser getParser() {
         return parser;
     }
-    
+
+    /**
+     * Gets the NotificationTray object.
+     * 
+     * @return the StatusParser object
+     */
     protected NotificationTray getNotifTray() {
         return notif;
     }
-    
+
+    /**
+     * Gets the state of regionChanged.
+     * 
+     * @return true if regions have changed
+     */
     protected boolean hasRegionChanged() {
         return regionChanged;
     }
 
     //========================== GLOBAL SETTERS ============================
+    /**
+     * Updates the last JButton that was pressed.
+     * 
+     * @param last the last JButton that was pressed
+     */
     protected void setLastClicked(JButton last) {
         lastClicked = last;
     }
     
+    /**
+     * Update the state of regionChanged.
+     * 
+     * @param change the new state of regionChanged
+     */
     protected void setRegionChanged(boolean change) {
         regionChanged = change;
     }

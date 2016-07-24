@@ -277,6 +277,13 @@ public class NotificationTray {
         return trayIcon;
     }
     
+    /**
+     * Sets the image of the current TrayIcon.  If no TrayIcon exists, a new
+     * object is instantiated with img.  Otherwise, set the image of the current
+     * TrayIcon.
+     * 
+     * @param img the Image for the TrayIcon.
+     */
     protected void setTrayIcon(Image img) {
         if(trayIcon == null) {
             trayIcon = new TrayIcon(img);

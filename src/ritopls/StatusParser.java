@@ -20,7 +20,6 @@ import java.util.HashMap;
  * @author Chris Meyers
  */
 public class StatusParser {
-    private final String currentUrlData;
     private final String baseUrl;
     private boolean networkOK;
     String ping;
@@ -37,20 +36,13 @@ public class StatusParser {
     public StatusParser(String region) throws IOException {
         baseUrl = "http://status.leagueoflegends.com/shards/";
         
-        String currentUrlString = buildUrl(region);
-        String url = "";
-        
         try {
-            url = getUrlData(currentUrlString);
+            getUrlData(baseUrl + region);
             networkOK = true;
         }
         catch(UnknownHostException e) {
-            url = "";
             networkOK = false;
         }
-        
-        currentUrlData = url;
-        ping = "";
     }
     
     /**
@@ -86,16 +78,6 @@ public class StatusParser {
             }    
         }        
     }
-    
-    /**
-     * Builds a URL to reflect the region the user selected.
-     * 
-     * @param region The region selected by the user.
-     * @return The API status url containing the current region.
-     */
-    private String buildUrl(String region) {
-        return baseUrl + region;
-    }
 
     /**
      * Used to test the functionality of the created thread that periodically polls
@@ -117,13 +99,11 @@ public class StatusParser {
      * @return The status of the specified service in the specified region.
      * @throws IOException 
      */
-    public HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> 
-                                        getStatus(String region) throws IOException {
-        
+    public HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> getStatus(String region) throws IOException {
         String currentData;
 
         try {
-            currentData = getUrlData(buildUrl(region));
+            currentData = getUrlData(baseUrl + region);
             networkOK = true;
         }
         catch(UnknownHostException e) {
@@ -221,7 +201,7 @@ public class StatusParser {
         }
         
         try {
-            URL statusUrlData = new URL(buildUrl(region));
+            URL statusUrlData = new URL(baseUrl + region);
             statusUrlData.openStream();
             networkOK = true;
             return true;

@@ -139,9 +139,7 @@ public class StatusHandler {
     * @param statusInfo All parsed information.
     * @throws InterruptedException
     */
-    private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) 
-                                            throws InterruptedException {
-
+    private void setStatusStrings(HashMap<String, HashMap<String, ArrayList<HashMap<String, HashMap<String, String>>>>> statusInfo) throws InterruptedException {
         String serviceString = "", status = "", id = "", severity = "", updatedTime = "", contentString = "", area = "";
         ArrayList<HashMap<String, String>> currentServiceIncList;
         HashMap<String, String> currentInc = new HashMap();
