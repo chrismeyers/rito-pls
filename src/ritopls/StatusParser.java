@@ -1,17 +1,16 @@
 package ritopls;
 
 import com.google.gson.*;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Scanner;
 
 /**
  * This class parses the current League of Legends service status data for a 
@@ -20,12 +19,12 @@ import java.util.HashMap;
  * @author Chris Meyers
  */
 public class StatusParser {
-    private final String baseUrl;
+    private String baseURL;
     private boolean networkOK;
     String ping;
     
     private static boolean DEBUG = false;
-    private static String DEBUG_FILE = "F:\\Development\\League of Legends\\rito-pls\\JSON_examples\\offline.json";
+    private static File DEBUG_FILE = resources.ResourceLoader.getFile("json/offline.json");
     
     /**
      * Constructor for the Parser class.
@@ -34,10 +33,10 @@ public class StatusParser {
      * @throws IOException 
      */
     public StatusParser(String region) throws IOException {
-        baseUrl = "http://status.leagueoflegends.com/shards/";
+        baseURL = StaticData.buildURL(region);
         
         try {
-            getUrlData(baseUrl + region);
+            getUrlData();
             networkOK = true;
         }
         catch(UnknownHostException e) {
@@ -48,35 +47,60 @@ public class StatusParser {
     /**
      * Gets server status data in JSON format from the League of Legends API.
      * 
-     * @param urlString The URL to get the server status data from.
      * @return The JSON obtained from the League of Legends API.
      * @throws IOException 
      */
-    public final String getUrlData(String urlString) throws IOException {
-        BufferedReader reader = null;
-        try {
-            URL statusUrlData = new URL(urlString);
-            if(DEBUG) {
-                InputStream fileStream = new FileInputStream(DEBUG_FILE);
-                reader = new BufferedReader(new InputStreamReader(fileStream));
-            }
-            else {
-                reader = new BufferedReader(new InputStreamReader(statusUrlData.openStream(), "UTF-8"));
-            }
-            StringBuilder buffer = new StringBuilder();
-            int read;
-            char[] chars = new char[4096];
-            while ((read = reader.read(chars)) != -1) {
-                buffer.append(chars, 0, read); 
+    public final String getUrlData() throws IOException {
+        if(DEBUG) {
+            // TODO: this is throwing an exception...
+            InputStream fileStream = new FileInputStream(DEBUG_FILE);
+
+            String line;
+            String contents = "";
+            while((line = new BufferedReader(new InputStreamReader(fileStream)).readLine()) != null) {
+                System.out.println(line);
+                contents += line;
             }
 
-            return buffer.toString().replace("\\r\\n", "");
-        } 
-        finally {
-            if (reader != null) {
-                reader.close();
-            }    
-        }        
+            System.out.println(contents);
+
+            return contents;
+        }
+        else {
+            try {
+                return getServerStatusData();
+            }
+            catch (IOException e) {
+                System.out.println(e);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Makes an API call to retrieve server status data.
+     *
+     * @return Server status data as a JSON string.
+     * @throws IOException
+     */
+    private String getServerStatusData() throws IOException {
+        File keyFile = resources.ResourceLoader.getFile("key.txt");
+        String key = new Scanner(keyFile).nextLine();
+
+        URLConnection conn = new URL(baseURL).openConnection();
+        conn.setDoOutput(true);
+        conn.setRequestProperty("X-Riot-Token", key);
+
+        try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+            String line = in.readLine();
+            in.close();
+            return line.replace("\\r\\n", "");
+        }
+        catch(UnknownHostException e) {
+            System.out.println(e);
+            throw e;
+        }
     }
 
     /**
@@ -103,7 +127,8 @@ public class StatusParser {
         String currentData;
 
         try {
-            currentData = getUrlData(baseUrl + region);
+            baseURL = StaticData.buildURL(region);
+            currentData = getUrlData();
             networkOK = true;
         }
         catch(UnknownHostException e) {
@@ -191,7 +216,7 @@ public class StatusParser {
      * Performs a network check by attempting to connect to the API.
      * 
      * @param region The current region.
-     * @return  True if openStream() was successful, false otherwise.
+     * @return True if openStream() was successful, false otherwise.
      * @throws IOException 
      */
     public boolean networkCheck(String region) throws IOException {
@@ -201,12 +226,12 @@ public class StatusParser {
         }
         
         try {
-            URL statusUrlData = new URL(baseUrl + region);
-            statusUrlData.openStream();
+            getServerStatusData();
             networkOK = true;
             return true;
         }
         catch(UnknownHostException e) {
+            System.out.println(e);
             networkOK = false;
             return false;
         }
@@ -243,7 +268,7 @@ public class StatusParser {
      * @param fileName An absolute path to a specified debug JSON file.
      */
     public void setDebugFile(String fileName) {
-        DEBUG_FILE = fileName;
+        DEBUG_FILE = new File(fileName);
     }
     
     /**

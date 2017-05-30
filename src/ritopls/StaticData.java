@@ -75,23 +75,26 @@ public class StaticData {
                                                         + "again by toggling the \"Click to check\" button.";
     
     private static final String[] services            = {"Client", "Game", "Store", "Website"};
-    private static final String[] regions             = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE", "JP", "KR"};
-    
+    private static final String[] regions             = {"NA", "EUW", "EUNE", "LAN", "LAS", "BR", "TR", "RU", "OCE", "JP", "KR", "PBE"};
+    private static final String[] regionsKeys         = {"na1", "euw1", "eun1", "la1", "la2", "br1", "tr1", "ru", "oc1", "jp1", "kr", "pbe1"};
+
+
     private static final int INFO_PRECEDENCE          = 1;
     private static final int WARN_PRECEDENCE          = 1;
     private static final int ALERT_PRECEDENCE         = 2;
     private static final int ERROR_PRECEDENCE         = 3;
     
     private static final String[] POLLING_RATES       = {"1", "5", "10", "30", "45", "60"};
-    
+
     private static final HashMap<String, String> regionIpAddresses = new HashMap();
 
-    public StaticData() {
+    public static String buildURL(String region) {
+        return "https://" + StaticData.getRegionKey(region) + ".api.riotgames.com/lol/status/v3/shard-data";
     }
-    
+
     /**
      * Gets the array of available regions.
-     * 
+     *
      * @return An array of available regions.
      */
     public static String[] getRegions() {
@@ -117,15 +120,34 @@ public class StaticData {
     protected static String getCurrentServiceName(int serv) {
         return services[serv];
     }
-    
+
     /**
      * Returns a specific region string.
-     * 
+     *
      * @param index The index of the desired region string.
      * @return The desired region string.
      */
     public String getRegion(int index) {
         return regions[index];
+    }
+
+    /**
+     * Returns the key associated to the given region.
+     * This key is used in API calls.
+     *
+     * @param region The string of the current region.
+     * @return The associated key value for the given region.
+     */
+    public static String getRegionKey(String region) {
+        int i = 0;
+        for(String r : regions) {
+            if(r.toUpperCase().equals(region.toUpperCase())) {
+                return regionsKeys[i];
+            }
+            i++;
+        }
+
+        return null;
     }
 
     /**

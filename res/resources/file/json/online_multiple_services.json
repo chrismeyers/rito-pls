@@ -1,0 +1,95 @@
+{  
+   "name":"Latin America North",
+   "slug":"lan",
+   "locales":[  
+      "es_MX"
+   ],
+   "hostname":"prod.la1.lol.riotgames.com",
+   "region_tag":"la1",
+   "services":[  
+      {  
+         "name":"Client",
+         "slug":"client",
+         "status":"online",
+         "incidents":[  
+
+         ]
+      },
+      {  
+         "name":"Game",
+         "slug":"game",
+         "status":"online",
+         "incidents":[  
+            {  
+               "id":2484,
+               "active":true,
+               "created_at":"2015-06-03T18:18:31.000Z",
+               "updates":[  
+                  {  
+                     "id":2834,
+                     "author":"",
+                     "content":"Por el momento el sistema de espectador se encuentra activo sólo para partidas clasificatorias y personalizadas. Lamentamos los inconvenientes.",
+                     "severity":"warn",
+                     "created_at":"2015-06-03T18:18:41.000Z",
+                     "updated_at":"2015-06-03T19:04:44.000Z",
+                     "translations":[  
+
+                     ]
+                  }
+               ]
+            },
+            {  
+               "id":2543,
+               "active":true,
+               "created_at":"2015-06-12T03:41:28.000Z",
+               "updates":[  
+                  {  
+                     "id":2901,
+                     "author":"",
+                     "content":"Inhabilitamos a Caitlyn temporalmente debido a un problema dentro del juego. Estamos buscando una solución.",
+                     "severity":"info",
+                     "created_at":"2015-06-12T03:42:16.000Z",
+                     "updated_at":"2015-06-12T03:42:17.000Z",
+                     "translations":[  
+
+                     ]
+                  }
+               ]
+            }
+         ]
+      },
+      {  
+         "name":"Store",
+         "slug":"store",
+         "status":"online",
+         "incidents":[  
+            {  
+               "id":2557,
+               "active":true,
+               "created_at":"2015-06-15T18:43:30.000Z",
+               "updates":[  
+                  {  
+                     "id":2913,
+                     "author":"",
+                     "content":"Todito Cash ha sido inhabilitado(a) mientras investigamos un problema que causa que este modo de compra no otorgue Riot Points.",
+                     "severity":"info",
+                     "created_at":"2015-06-15T18:44:11.000Z",
+                     "updated_at":"2015-06-15T18:44:11.000Z",
+                     "translations":[  
+
+                     ]
+                  }
+               ]
+            }
+         ]
+      },
+      {  
+         "name":"Website",
+         "slug":"web",
+         "status":"online",
+         "incidents":[  
+
+         ]
+      }
+   ]
+}

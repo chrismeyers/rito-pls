@@ -7,3 +7,9 @@
 src/.DS_Store
 nbproject/
 .metadata/
+.idea
+out
+key.txt
+*.iml
+dist/
+store/
