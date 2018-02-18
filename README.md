@@ -3,6 +3,8 @@ rito-pls [ree-toe please] is a Java application that reports current *League of 
 
 The purpose of this project was to get more practice with Java GUI building and multithreaded programming.  The polling operation takes place on a new thread that allows for the program to function normally while maintaining periodic server checks.
 
+**Note: Due to the several changes to the Riot Games API, this application is no longer maintained and is not guaranteed to work.**
+
 <img src="http://i.imgur.com/kdXiIhb.png" alt="GUI" width="335px" height="358px">
 <img src="http://i.imgur.com/fAcPYfP.png" alt="Notification area">
 
